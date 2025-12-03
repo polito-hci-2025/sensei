@@ -1,0 +1,156 @@
+### AUTENTICAZIONE (da decommentare nel codice)
+# Login
+POST http://localhost:3001/api/sessions
+content-type: application/json
+
+{
+  "username": "example@email.com",
+  "password": "password123"
+}
+
+###
+
+# Verifica sessione corrente
+GET http://localhost:3001/api/sessions/current
+
+###
+
+# Logout
+DELETE http://localhost:3001/api/sessions/current
+
+###
+
+### COMPITI
+
+# Ottieni tutti i compiti
+GET http://localhost:3001/api/compiti
+
+###
+
+# Ottieni compito specifico per ID
+GET http://localhost:3001/api/compiti/1
+
+###
+
+# Ottieni compiti di un professore
+GET http://localhost:3001/api/professori/1/compiti
+
+###
+
+# Ottieni compiti di uno studente
+GET http://localhost:3001/api/studenti/1/compiti
+
+###
+
+# Crea nuovo compito (NOTA: mancano gli import per validation)
+POST http://localhost:3001/api/compiti
+content-type: application/json
+
+{
+  "domanda": "Quali sono i principi dell'architettura software?",
+  "id_prof": 1,
+  "dimensione_gruppo": 3
+}
+
+###
+
+# Aggiorna risposta di un compito
+PUT http://localhost:3001/api/compiti/1/risposta
+content-type: application/json
+
+{
+  "risposta": "I principi fondamentali dell'architettura software includono: modularità, separazione delle responsabilità, riusabilità e manutenibilità."
+}
+
+###
+
+# Assegna voto a un compito
+PUT http://localhost:3001/api/compiti/1/voto
+content-type: application/json
+
+{
+  "voto": 25,
+  "id_prof": 1
+}
+
+###
+
+### GRUPPI 
+
+# Ottieni tutti i gruppi
+GET http://localhost:3001/api/gruppi
+
+###
+
+# Ottieni gruppo per studente e task
+GET http://localhost:3001/api/studenti/1/task/1
+
+###
+
+# Ottieni gruppi per task
+GET http://localhost:3001/api/gruppi/task/1
+
+###
+
+# Crea nuovo gruppo
+POST http://localhost:3001/api/gruppi
+content-type: application/json
+
+{
+  "id_task": 1,
+  "id_studente": 2
+}
+
+###
+
+# Verifica se studente e professore possono lavorare insieme
+GET http://localhost:3001/api/verifica-coppia/1/1
+
+###
+
+### UTENTI
+
+# Ottieni tutti gli studenti
+GET http://localhost:3001/api/studenti
+
+###
+
+# Ottieni studente specifico
+GET http://localhost:3001/api/studenti/1
+
+###
+
+# Ottieni professore specifico
+GET http://localhost:3001/api/professori/1
+
+###
+
+### TEST DI ERRORE
+
+# Test compito inesistente
+GET http://localhost:3001/api/compiti/999
+
+###
+
+# Test creazione compito con dati invalidi
+POST http://localhost:3001/api/compiti
+content-type: application/json
+
+{
+  "domanda": "",
+  "id_prof": "non_un_numero",
+  "dimensione_gruppo": 10
+}
+
+###
+
+# Test aggiornamento voto su compito senza risposta
+PUT http://localhost:3001/api/compiti/999/voto
+content-type: application/json
+
+{
+  "voto": 30,
+  "id_prof": 1
+}
+
+###

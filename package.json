@@ -1,0 +1,19 @@
+{
+  "name": "esame2-compiti-sofia2503",
+  "version": "1.0.0",
+  "description": "[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/F9jR7G97)\r # Exam #N: \"Exam Title\"\r ## Student: s123456 LASTNAME FIRSTNAME",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/polito-aw1-2025-exams/esame2-compiti-Sofia2503.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/polito-aw1-2025-exams/esame2-compiti-Sofia2503/issues"
+  },
+  "homepage": "https://github.com/polito-aw1-2025-exams/esame2-compiti-Sofia2503#readme"
+}
