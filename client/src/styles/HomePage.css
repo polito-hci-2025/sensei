@@ -1,0 +1,248 @@
+/* HomePage specific styles */
+
+.homepage-container {
+  display: flex;
+  height: 100%;
+}
+
+.homepage-sidebar {
+  width: 18rem;
+  border-right: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  padding: 2rem 1.25rem;
+  overflow-y: auto;
+}
+
+.homepage-sidebar h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1.25rem;
+}
+
+.homepage-works-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.homepage-work-card {
+  background: linear-gradient(to bottom right, #f3e8ff, #e9d5ff);
+  border-radius: 1rem;
+  padding: 1rem;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid #e9d5ff;
+  transition: all 0.2s;
+}
+
+.homepage-work-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.homepage-work-card-menu {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  color: #9333ea;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.homepage-work-card-menu:hover {
+  color: #6b21a8;
+}
+
+.homepage-work-card h4 {
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
+  padding-right: 1.5rem;
+}
+
+.homepage-work-card span {
+  font-size: 0.75rem;
+  color: #9333ea;
+  font-weight: 500;
+}
+
+.homepage-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.homepage-action-button {
+  width: 100%;
+  color: white;
+  padding: 0.875rem 0;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.homepage-action-button.create {
+  background: linear-gradient(to right, #3b82f6, #2563eb);
+}
+
+.homepage-action-button.create:hover {
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transform: scale(1.05);
+}
+
+.homepage-action-button.adapt {
+  background: linear-gradient(to right, #a855f7, #9333ea);
+}
+
+.homepage-action-button.adapt:hover {
+  background: linear-gradient(to right, #9333ea, #7e22ce);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transform: scale(1.05);
+}
+
+.homepage-action-button.shared {
+  background: linear-gradient(to right, #ec4899, #db2777);
+}
+
+.homepage-action-button.shared:hover {
+  background: linear-gradient(to right, #db2777, #be185d);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transform: scale(1.05);
+}
+
+.homepage-main-content {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+  background-color: #f3f4f6;
+}
+
+.homepage-section {
+  margin-bottom: 3rem;
+}
+
+.homepage-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1.5rem;
+}
+
+.homepage-lessons-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.homepage-lesson-card {
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  position: relative;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transition: all 0.2s;
+}
+
+.homepage-lesson-card.dyslexia {
+  background: linear-gradient(to bottom right, #c084fc, #a855f7);
+}
+
+.homepage-lesson-card.dysgraphia {
+  background: linear-gradient(to bottom right, #60a5fa, #3b82f6);
+}
+
+.homepage-lesson-card.dyscalculia {
+  background: linear-gradient(to bottom right, #f472b6, #ec4899);
+}
+
+.homepage-lesson-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.homepage-lesson-card-category {
+  font-size: 0.875rem;
+  color: white;
+  font-style: italic;
+  font-weight: 300;
+}
+
+.homepage-lesson-card-downloads {
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.homepage-lesson-card-downloads svg {
+  margin-right: 0.25rem;
+}
+
+.homepage-lesson-card-downloads span {
+  font-weight: 600;
+}
+
+.homepage-lesson-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.75rem;
+}
+
+.homepage-lesson-card-subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 1.25rem;
+}
+
+.homepage-lesson-card-tags {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.homepage-lesson-card-tag {
+  background-color: rgba(255, 255, 255, 0.25);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+.homepage-lesson-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.homepage-lesson-card-author {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.homepage-lesson-card-button {
+  background-color: white;
+  color: #1f2937;
+  padding: 0.5rem 1.5rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.homepage-lesson-card-button:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.05);
+}

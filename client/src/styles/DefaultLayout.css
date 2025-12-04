@@ -1,0 +1,52 @@
+/* DefaultLayout specific styles */
+
+.layout-container {
+  min-height: 100vh;
+  background-color: white;
+}
+
+.layout-header {
+  background-color: white;
+  border-bottom: 1px solid #d1d5db;
+  padding: 1.5rem 2rem;
+}
+
+.layout-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.layout-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.layout-logo-link:hover {
+  opacity: 0.8;
+}
+
+.layout-logo-title {
+  font-size: 2.25rem;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-style: italic;
+  background: linear-gradient(to right, #9333ea, #a855f7, #c084fc);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.layout-user-info {
+  color: #374151;
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.layout-content {
+  height: calc(100vh - 88px);
+  overflow: hidden;
+}
