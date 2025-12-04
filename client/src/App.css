@@ -1,49 +1,30 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+/* App specific styles */
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
+/* Layout utilities */
+.max-w-\[1400px\] { max-width: 1400px; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.rounded-\[50px\] { border-radius: 50px; }
+.rounded-\[35px\] { border-radius: 35px; }
+.rounded-b-3xl { border-bottom-left-radius: 1.5rem; border-bottom-right-radius: 1.5rem; }
+.w-40 { width: 10rem; }
+.h-7 { height: 1.75rem; }
+.shadow-2xl { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+.bg-gray-800 { background-color: #1f2937; }
+.bg-gray-900 { background-color: #111827; }
+.from-gray-800 { --tw-gradient-from: #1f2937; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.to-gray-900 { --tw-gradient-to: #111827; }
+.from-indigo-100 { --tw-gradient-from: #e0e7ff; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.via-purple-100 { --tw-gradient-to: rgb(243 232 255); --tw-gradient-stops: var(--tw-gradient-from), #f3e8ff, var(--tw-gradient-to); }
+.to-pink-100 { --tw-gradient-to: #fce7f3; }
+.from-blue-50 { --tw-gradient-from: #eff6ff; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.to-purple-50 { --tw-gradient-to: #faf5ff; }
+.text-indigo-600 { color: #4f46e5; }
+.from-indigo-600 { --tw-gradient-from: #4f46e5; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.via-purple-600 { --tw-gradient-to: rgb(147 51 234); --tw-gradient-stops: var(--tw-gradient-from), #9333ea, var(--tw-gradient-to); }
+.to-pink-600 { --tw-gradient-to: #db2777; }
+.border-indigo-200 { border-color: #c7d2fe; }
+.border-b { border-bottom-width: 1px; }
+.h-\[calc\(100\%-88px\)\] { height: calc(100% - 88px); }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-input[type="checkbox"] {
-  accent-color: #5095FA;
-}
-input[type="checkbox"]:checked {
-  accent-color: #B7A3FA;
-}
+.h-\[calc\(100vh-88px\)\] { height: calc(100vh - 88px); }
+.border-gray-300 { border-color: #d1d5db; }
