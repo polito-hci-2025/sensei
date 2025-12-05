@@ -7,8 +7,8 @@
 
 .layout-header {
   background-color: white;
-  border-bottom: 1px solid #d1d5db;
-  padding: 1.5rem 2rem;
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .layout-header-content {
@@ -30,23 +30,37 @@
 }
 
 .layout-logo-title {
-  font-size: 2.25rem;
+  font-size: 2rem;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   font-style: italic;
-  background: linear-gradient(to right, #9333ea, #a855f7, #c084fc);
+  background: linear-gradient(to right, #7c3aed, #a855f7);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+  font-weight: 600;
 }
 
-.layout-user-info {
+.layout-user-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.layout-welcome-text {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-bottom: -2px;
+}
+
+.layout-user-name {
+  font-size: 0.9375rem;
   color: #374151;
-  font-size: 1.125rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .layout-content {
-  height: calc(100vh - 88px);
+  height: calc(100vh - 76px);
   overflow: hidden;
 }

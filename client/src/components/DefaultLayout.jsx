@@ -13,7 +13,10 @@ function DefaultLayout() {
               Sensei
             </h1>
           </Link>
-          <span className="layout-user-info">prof Rossi</span>
+          <div className="layout-user-section">
+            <span className="layout-welcome-text">Welcome back,</span>
+            <span className="layout-user-name">prof Rossi</span>
+          </div>
         </div>
       </header>
 
