@@ -1,26 +1,36 @@
-function Compito(id_compito, domanda, id_prof, dimensione_gruppo, stato='aperto', risposta=null, voto=null){
-    this.id_compito = id_compito;
-    this.domanda = domanda;
-    this.id_prof = id_prof;
-    this.dimensione_gruppo = dimensione_gruppo;
-    this.stato = stato;
-    this.risposta = risposta;
-    this.voto = voto;
+function MyWork(id_pdf, NamePDF, Subject, Grade, Tag, Description, Shared,Download, Prof, Type){
+    this.id_pdfa=id_pdf,
+    this.NamePDF=NamePDF,
+    this.Subject=Subject,
+    this.Grade=Grade,
+    this.Tag=Tag,
+    this.Description=Description,
+    this.Shared=Shared,
+    this.Download=Download,
+    this.Prof=Prof,
+    this.Type=Type
+
 }
 
-function Gruppo(id_task, id_studente){
-    this.id_task = id_task;
-    this.id_studente = id_studente;
+function Shared(id, NamePDF, Subject,Grade, Tag,Description,Shared,Download, Prof){
+    this.id=id,
+    this.NamePDF=NamePDF,
+    this.Subject=Subject,
+    this.Grade=Grade,
+    this.Tag=Tag,
+    this.Description=Description,
+    this.Shared=Shared,
+    this.Download=Download,
+    this.Prof=Prof
+    
 }
 
-function Utente(id_utente, username, password, salt, ruolo, nome, cognome){
-    this.id_utente = id_utente;
-    this.username = username;
-    this.password = password;
-    this.salt = salt;
-    this.ruolo = ruolo; 
-    this.nome = nome;
-    this.cognome = cognome;
+function CreatePDF(id, id_pdf, content, type, answers){
+    this.id=id,
+    this.id_pdf=id_pdf,
+    this.content=content,
+    this.type=type,
+    this.answers=answers
 }
 
-export { Compito, Gruppo, Utente };
+export { MyWork, Shared, CreatePDF};
