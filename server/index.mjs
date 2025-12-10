@@ -50,76 +50,6 @@ passport.deserializeUser(function (user, cb) {
   return cb(null, user);
 });
 
-const isLoggedIn = (req, res, next) => {
-  if(req.isAuthenticated()) {
-    return next();
-  }
-  return res.status(401).json({error: 'Not authorized'});
-}
-
-const isProfessore = (req, res, next) => {
-  if(req.isAuthenticated() && req.user.ruolo === 'professore') {
-    return next();
-  }
-  return res.status(403).json({error: 'Access denied - only teachers allowed'});
-}
-
-const isStudente = (req, res, next) => {
-  if(req.isAuthenticated() && req.user.ruolo === 'studente') {
-    return next();
-  }
-  return res.status(403).json({error: 'Access denied - only students allowed'});
-}
-
-app.use(session({
-  secret: "shhhhh... it's a secret!",
-  resave: false,
-  saveUninitialized: false,
-}));
-
-app.use(passport.authenticate('session'));
-
-      //////////////////
-      //AUTENTICAZIONE//
-      //////////////////
-
-//POST /api/sessions
-app.post('/api/sessions', function(req, res, next) {
-  passport.authenticate('local', (err, user, info) => {
-    if (err)
-      return next(err);
-    if (!user) {
-      return res.status(401).json(info);
-    }
-    req.logIn(user, (err) => {
-      if (err)
-        return next(err);
-      
-      return res.json(req.user);
-    });
-  })(req, res, next);
-});
-
-//GET /api/sessions/current
-app.get('/api/sessions/current', (req, res)=>{
-  if(req.isAuthenticated()){
-    res.json(req.user);
-  }else{
-    res.status(401).json({error: 'Not authenticated'});
-  }
-});
-
-//DELETE /api/sessions/current
-app.delete('/api/sessions/current', (req, res) => {
-  req.logout(()=>{
-    res.end();
-  });
-});
-
-        /////////////
-        ///COMPITI///
-        /////////////
-//prende il compito dall'id
 //GET /api/compiti/:id
 app.get('/api/compiti/:id', isLoggedIn, async (req, res)=>{
   try{
@@ -136,7 +66,7 @@ app.get('/api/compiti/:id', isLoggedIn, async (req, res)=>{
   }
 });
 
-//aggiorna la risposta del compito
+//MODIFICARE TITOLO, DESCRIZIONE E SHARED 
 //PUT /api/compiti/:id/risposta
 app.put('/api/compiti/:id/risposta', isLoggedIn, isStudente, [
   check('risposta').notEmpty().withMessage('La risposta è obbligatoria')
