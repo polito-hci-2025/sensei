@@ -1,0 +1,309 @@
+.homepage-container {
+  display: flex;
+  height: 100%;
+  background-color: #F2E9E4;
+}
+
+/* Sidebar */
+.homepage-sidebar {
+  width: 280px;
+  background-color: #F2E9E4;
+  border-right: 1px solid #C9ADA7;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  overflow-y: auto;
+}
+
+.homepage-works-section h2 {
+  font-size: 1.125rem;
+  color: #22223B;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.homepage-works-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.homepage-work-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: #F2E9E4;
+  border: 1px solid #C9ADA7;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.homepage-work-card:hover {
+  background-color: #C9ADA7;
+  border-color: #9A8C98;
+}
+
+.homepage-work-card h4 {
+  font-size: 0.875rem;
+  color: #22223B;
+  font-weight: 600;
+  margin: 0;
+}
+
+.homepage-work-card span {
+  font-size: 0.75rem;
+  color: #9A8C98;
+  font-weight: 400;
+}
+
+.homepage-work-card-menu {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #4A4E69;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.homepage-work-card-menu:hover {
+  color: #22223B;
+}
+
+.homepage-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.homepage-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.homepage-action-button.create {
+  background-color: #4A4E69;
+  color: #F2E9E4;
+}
+
+.homepage-action-button.create:hover {
+  background-color: #22223B;
+  transform: translateY(-2px);
+}
+
+.homepage-action-button.adapt {
+  background-color: #9A8C98;
+  color: #F2E9E4;
+}
+
+.homepage-action-button.adapt:hover {
+  background-color: #4A4E69;
+  transform: translateY(-2px);
+}
+
+.homepage-action-button.shared {
+  background-color: #C9ADA7;
+  color: #22223B;
+}
+
+.homepage-action-button.shared:hover {
+  background-color: #9A8C98;
+  transform: translateY(-2px);
+}
+
+/* Main Content */
+.homepage-main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.homepage-section {
+  margin-bottom: 3rem;
+}
+
+.homepage-section h2 {
+  font-size: 1.5rem;
+  color: #22223B;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.homepage-lessons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Lesson Card */
+.homepage-lesson-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #C9ADA7;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.homepage-lesson-card:hover {
+  box-shadow: 0 4px 12px rgba(34, 34, 59, 0.1);
+  border-color: #9A8C98;
+  transform: translateY(-2px);
+}
+
+.homepage-lesson-card.dyslexia {
+  border-left: 4px solid #4A4E69;
+}
+
+.homepage-lesson-card.dysgraphia {
+  border-left: 4px solid #9A8C98;
+}
+
+.homepage-lesson-card.dyscalculia {
+  border-left: 4px solid #C9ADA7;
+}
+
+.homepage-lesson-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.homepage-lesson-card-category {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #F2E9E4;
+  background-color: #4A4E69;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+}
+
+.homepage-lesson-card-downloads {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #9A8C98;
+  font-size: 0.875rem;
+}
+
+.homepage-lesson-card-downloads svg {
+  color: #9A8C98;
+}
+
+.homepage-lesson-card h3 {
+  font-size: 1.125rem;
+  color: #22223B;
+  font-weight: 600;
+  margin: 0;
+}
+
+.homepage-lesson-card-subtitle {
+  color: #9A8C98;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.homepage-lesson-card-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.homepage-lesson-card-tag {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-weight: 500;
+  background-color: #F2E9E4;
+  color: #4A4E69;
+}
+
+.homepage-lesson-card-tag.grade {
+  background-color: #C9ADA7;
+  color: #22223B;
+}
+
+.homepage-lesson-card-tag.category-dyslexia {
+  background-color: #E8E4F0;
+  color: #4A4E69;
+}
+
+.homepage-lesson-card-tag.category-dysgraphia {
+  background-color: #F0EBE8;
+  color: #9A8C98;
+}
+
+.homepage-lesson-card-tag.category-dyscalculia {
+  background-color: #E8E0DC;
+  color: #C9ADA7;
+}
+
+.homepage-lesson-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.homepage-lesson-card-author {
+  font-size: 0.75rem;
+  color: #9A8C98;
+  font-weight: 500;
+}
+
+.homepage-lesson-card-button {
+  padding: 0.5rem 1rem;
+  background-color: #4A4E69;
+  color: #F2E9E4;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.homepage-lesson-card-button:hover {
+  background-color: #22223B;
+  transform: translateY(-1px);
+}
+
+/* Scrollbar styling */
+.homepage-sidebar::-webkit-scrollbar,
+.homepage-main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.homepage-sidebar::-webkit-scrollbar-track,
+.homepage-main-content::-webkit-scrollbar-track {
+  background: #F2E9E4;
+}
+
+.homepage-sidebar::-webkit-scrollbar-thumb,
+.homepage-main-content::-webkit-scrollbar-thumb {
+  background: #C9ADA7;
+  border-radius: 4px;
+}
+
+.homepage-sidebar::-webkit-scrollbar-thumb:hover,
+.homepage-main-content::-webkit-scrollbar-thumb:hover {
+  background: #9A8C98;
+}
