@@ -18,6 +18,7 @@ import session from 'express-session';
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
 import { check, validationResult } from 'express-validator';
+import { MyWork } from './models.mjs';
 
 // init express
 const app = new express();
@@ -51,62 +52,62 @@ passport.deserializeUser(function (user, cb) {
 });
 
 //GET /api/compiti/:id
-app.get('/api/compiti/:id', isLoggedIn, async (req, res)=>{
+app.get('/api/myworks/:id', async (req, res)=>{
   try{
     const id = parseInt(req.params.id);
-    const compito = await getCompitoById(id);
+    const work = await getMyWorkById(id);
 
-    if (compito) {
-      res.json(compito);
+    if (work) {
+      res.json(work);
     } else {
-      res.status(404).json({error: 'Compito non trovato'});
+      res.status(404).json({error: 'Pdf non trovato'});
     }
   }catch (error) {
     res.status(500).json({error: error.message});
   }
 });
 
-//MODIFICARE TITOLO, DESCRIZIONE E SHARED 
-//PUT /api/compiti/:id/risposta
-app.put('/api/compiti/:id/risposta', isLoggedIn, isStudente, [
-  check('risposta').notEmpty().withMessage('La risposta è obbligatoria')
+app.get('/api/myworks', async (req, res)=>{
+  try{
+    const work = await getAllMyWorks();
+    res.json(work);
+  }catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+//PUT /api/myworks/create
+app.put('/api/myworks/create', [
+  check('title').notEmpty().withMessage('Title is mandatory'),
+  check('subject').notEmpty().withMessage('Subject is mandatory'),
+  check('grade').notEmpty().withMessage('Grade is mandatory'),
+  check('shared').isNumeric().withMessage('Shared must be numeric'),
+  check('type').notEmpty().withMessage('Type is mandatory')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
   }
-  const id_compito = parseInt(req.params.id);
-  const gruppo = await getGruppiByCompito(id_compito);
-  const studenteNelGruppo = gruppo.some(g => g.id_utente === req.user.id_utente);
   
-  if (!studenteNelGruppo) {
-    return res.status(403).json({error: 'Non autorizzato a rispondere a questo compito'});
-  }
-
-  const compito = await getCompitoById(id_compito);
-  if(compito.stato !== 'aperto'){
-    return res.status(409).json({error: 'Il compito è stato chiuso'});
-  }
-
   try {
-    const { risposta } = req.body;
+    const { title, subject, grade, tag, description, shared, download, prof, type } = req.body;
+    const newWork = MyWork(null, title, subject, grade, tag, description, shared, download, prof, type);
+    const createdPDF = await createPDF(newWork);
+    res.status(201).json(createdPDF);
 
-    const result = await updateRispostaCompito(id_compito, risposta); 
-
-    if (result) {
-      res.json(result);
-    } else {
-      res.status(404).json({error: 'Compito non trovato, non accessibile o già chiuso'});
-    }
   } catch (error) {
-    res.status(503).json({error: 'Errore nell\'aggiornamento della risposta del compito'});
+    res.status(500).json({error: 'Error creating PDF'});
   }
 });
 
 //aggiorna voto del compito
 //PUT /api/compiti/:id_compito/voto
-app.put('/api/compiti/:id_compito/voto', isLoggedIn, isProfessore, [
-  check('voto').isInt({min: 0, max: 30}),
+app.put('/api/myworks/:id/edit', [
+  check('title').notEmpty().withMessage('Title is mandatory'),
+  check('description').notEmpty().withMessage('Description is mandatory'),
+  check('subject').notEmpty().withMessage('Subject is mandatory'),
+  check('grade').notEmpty().withMessage('Grade is mandatory'),
+  check('shared').isNumeric().withMessage('Shared must be numeric')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {  
@@ -114,20 +115,14 @@ app.put('/api/compiti/:id_compito/voto', isLoggedIn, isProfessore, [
   }
 
   try {
-    const id_compito = parseInt(req.params.id_compito);
-    const { voto} = req.body;
+    const id = parseInt(req.params.id);
+    const { title, description, subject, grade, shared } = req.body;
 
-    const compito = await getCompitoById(id_compito);
-    if(!compito || compito.error){
+    const oldPdf = await getMyWorkById(id);
+    if(!oldPdf || oldPdf.error){
       return res.status(404).json({error: 'Compito non trovato'});
     }
-
-    if (compito.id_prof !== req.user.id_utente) {
-      return res.status(403).json({error: 'Non autorizzato a valutare questo compito'});
-    }
-    
-
-    const result = await updateVotoCompito(id_compito, voto); 
+    const result = await updateInfo(id, title, description, subject, grade, shared);
 
     if (result) {
       res.json(result);
@@ -138,6 +133,30 @@ app.put('/api/compiti/:id_compito/voto', isLoggedIn, isProfessore, [
     res.status(503).end();
   }
 });
+
+app.delete('/api/myworks/:id/delete', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const oldPdf = await getMyWorkById(id);
+    if(!oldPdf || oldPdf.error){
+      return res.status(404).json({error: 'Compito non trovato'});
+    } 
+    const result = await deleteMyWork(id);
+
+    if(oldPdf.Type === 'created'){
+      const deleteContentResult = await deleteAllContentPDF(id);
+    }
+    
+    if (result) {
+      res.json(result);
+    } else {
+      res.status(404).json({error: result.error});
+    }
+  } catch (error) {
+    res.status(503).end();
+  }
+});
+
 
       ////////////
       //STUDENTI//

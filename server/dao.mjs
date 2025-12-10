@@ -169,6 +169,19 @@ export const updateContentPDF = (id, content, answers, type) => {
     });
 }
 
+export const deleteAllContentPDF = (id_pdf) => { 
+    return new Promise((resolve, reject) => {
+        const sql = 'DELETE FROM createPDF WHERE id_pdf = ?';   
+        db.run(sql, [id_pdf], function(err) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve({message: 'All contents deleted successfully'});
+            }
+        });
+    });
+}
+
 export const deleteContentPDF = (id) => {
     return new Promise((resolve, reject) => {
         const sql = 'DELETE FROM createPDF WHERE ID = ?';   
