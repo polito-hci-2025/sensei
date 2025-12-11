@@ -5,7 +5,7 @@ const db = new sqlite.Database('database.sqlite', (err) =>{
     if(err) throw err;
 });
 
-//get a task by id
+//get a my work by id
 export const getMyWorkById = (id) => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT * FROM myworks WHERE ID = ?';
@@ -21,7 +21,7 @@ export const getMyWorkById = (id) => {
     });
 }
 
-//get task by teacher id
+//get all my works
 export const getAllMyWorks = () => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT * FROM myworks';
@@ -56,11 +56,11 @@ export const createPDF = (MyWork) => {
     });
 }
 
-//update risposta ad un task
-export const updateInfo = (id, title, description, subject, grade, shared) => {
+//update info
+export const updateInfo = (id, NamePDF, Description, Subject, Grade, Shared) => {
     return new Promise((resolve, reject) => {
-        const sql = 'UPDATE myworks SET title = ?, description = ?, subject = ?, grade = ?, shared = ? WHERE ID = ?';
-        db.run(sql, [title, description, subject, grade, shared, id], function(err) {
+        const sql = 'UPDATE myworks SET NamePDF = ?, Description = ?, Subject = ?, Grade = ?, Shared = ? WHERE ID = ?';
+        db.run(sql, [NamePDF, Description, Subject, Grade, Shared, id], function(err) {
             if (err) {
                 reject(err);
             } else if(this.changes === 0) {
@@ -111,6 +111,22 @@ export const getAllSharedWorks = () => {
     });
 }
 
+export const getSharedWorkById = (id) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'SELECT * FROM sharedworks WHERE ID = ?';
+        db.get(sql, [id], (err, row) => {
+            if (err) {
+                reject(err);
+            } else if(row===undefined) {
+                resolve({error: 'Compito non trovato, controlla l\'ID'});
+            }
+            else {
+                resolve(new Shared(row.ID, row.NamePDF, row.Subject, row.Grade, row.Tag, row.Description, row.Shared, row.Download, row.Prof));
+            }       
+        });
+    });
+}
+
 export const download = (id_pdf) => {
     return new Promise((resolve, reject) => {
         const sql = 'UPDATE sharedworks SET Download = Download + 1 WHERE ID = ?';
@@ -129,10 +145,10 @@ export const download = (id_pdf) => {
         ////////////////
 
 
-//get all students
+//get all content by id_pdf
 export const getContentById = (id_pdf) => {
     return new Promise((resolve, reject) => {
-        const sql = 'SELECT * FROM createPDF WHERE ID = ?';
+        const sql = 'SELECT * FROM createPDF WHERE ID_PDF = ?';
         db.all(sql, [id_pdf], (err, rows) => {
             if (err) {
                 reject(err);
@@ -143,10 +159,12 @@ export const getContentById = (id_pdf) => {
     });
 }
 
-export const createContentPDF = (CreatePDF) => {
+
+
+export const createContentPDF = (id_pdf, content, type, answers) => {
     return new Promise((resolve, reject) => {
         const sql = 'INSERT INTO createPDF (id_pdf, content, type, answers) VALUES (?, ?, ?, ?)';
-        db.run(sql, [CreatePDF.id_pdf, CreatePDF.content, CreatePDF.type, CreatePDF.answers], function(err) {
+        db.run(sql, [id_pdf, content, type, answers], function(err) {
             if (err) {
                 reject(err);
             } else {
@@ -156,10 +174,10 @@ export const createContentPDF = (CreatePDF) => {
     });
 }
 
-export const updateContentPDF = (id, content, answers, type) => {
+export const updateContentPDF = (id, content, type, answers) => {
     return new Promise((resolve, reject) => {
-        const sql = 'UPDATE createPDF SET content = ?, answers = ?, type = ? WHERE ID = ?';
-        db.run(sql, [content, answers, type, id], function(err) {
+        const sql = 'UPDATE createPDF SET content = ?, type = ?, answers = ? WHERE ID = ?';
+        db.run(sql, [content, type, answers, id], function(err) {
             if (err) {
                 reject(err);
             } else {

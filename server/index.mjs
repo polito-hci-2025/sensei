@@ -1,24 +1,23 @@
 import express from 'express';
 import morgan from 'morgan';
-import { getCompitiByIdInsegnante, 
-  getCompitoById, 
-  getCompitiByIdStudente,
-  getStudenteById, 
-  creaCompito, 
-  updateVotoCompito, 
-  updateRispostaCompito,
-  getListaStudenti,
-  verificaCoppia,
-  getUser,
-  getGruppiByCompito,
-  creaGruppo,
-  getStatoClasse } from './dao.mjs';
+import { 
+  getMyWorkById,
+  getAllMyWorks,
+  createPDF,
+  updateInfo,
+  deleteMyWork,
+  getAllSharedWorks,
+  getSharedWorkById,
+  download,
+  getContentById,
+  createContentPDF,
+  updateContentPDF,
+  deleteAllContentPDF,
+  deleteContentPDF
+} from './dao.mjs';
 import cors from 'cors';
-import session from 'express-session';
-import passport from 'passport';
-import LocalStrategy from 'passport-local';
 import { check, validationResult } from 'express-validator';
-import { MyWork } from './models.mjs';
+
 
 // init express
 const app = new express();
@@ -35,23 +34,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-passport.use(new LocalStrategy(async function verify(username, password, cb) {
-  const user = await getUser(username, password);
-  if(!user)
-    return cb(null, false, 'Username o password errati');
-    
-  return cb(null, user);
-}));
 
-passport.serializeUser(function (user, cb) {
-  cb(null, user);
-});
 
-passport.deserializeUser(function (user, cb) {
-  return cb(null, user);
-});
-
-//GET /api/compiti/:id
+//GET /api/myworks/:id
 app.get('/api/myworks/:id', async (req, res)=>{
   try{
     const id = parseInt(req.params.id);
@@ -76,13 +61,13 @@ app.get('/api/myworks', async (req, res)=>{
   }
 });
 
-//PUT /api/myworks/create
-app.put('/api/myworks/create', [
-  check('title').notEmpty().withMessage('Title is mandatory'),
-  check('subject').notEmpty().withMessage('Subject is mandatory'),
-  check('grade').notEmpty().withMessage('Grade is mandatory'),
-  check('shared').isNumeric().withMessage('Shared must be numeric'),
-  check('type').notEmpty().withMessage('Type is mandatory')
+//POST /api/myworks/create
+app.post('/api/myworks/create', [
+  check('NamePDF').notEmpty().withMessage('NamePDF is mandatory'),
+  check('Subject').notEmpty().withMessage('Subject is mandatory'),
+  check('Grade').notEmpty().withMessage('Grade is mandatory'),
+  check('Shared').isNumeric().withMessage('Shared must be numeric'),
+  check('Type').notEmpty().withMessage('Type is mandatory')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -90,24 +75,25 @@ app.put('/api/myworks/create', [
   }
   
   try {
-    const { title, subject, grade, tag, description, shared, download, prof, type } = req.body;
-    const newWork = MyWork(null, title, subject, grade, tag, description, shared, download, prof, type);
+    const { NamePDF, Subject, Grade, Tag, Description, Shared, Download, Prof, Type } = req.body;
+    const newWork = {NamePDF, Subject, Grade, Tag, Description, Shared, Download, Prof, Type};
     const createdPDF = await createPDF(newWork);
     res.status(201).json(createdPDF);
 
   } catch (error) {
-    res.status(500).json({error: 'Error creating PDF'});
+    console.error('Error creating PDF:', error);
+    res.status(500).json({error: 'Error creating PDF', details: error.message});
   }
 });
 
-//aggiorna voto del compito
-//PUT /api/compiti/:id_compito/voto
+//aggiorna info di un mywork
+//PUT /api/myworks/:id/edit
 app.put('/api/myworks/:id/edit', [
-  check('title').notEmpty().withMessage('Title is mandatory'),
-  check('description').notEmpty().withMessage('Description is mandatory'),
-  check('subject').notEmpty().withMessage('Subject is mandatory'),
-  check('grade').notEmpty().withMessage('Grade is mandatory'),
-  check('shared').isNumeric().withMessage('Shared must be numeric')
+  check('NamePDF').notEmpty().withMessage('NamePDF is mandatory'),
+  check('Description').notEmpty().withMessage('Description is mandatory'),
+  check('Subject').notEmpty().withMessage('Subject is mandatory'),
+  check('Grade').notEmpty().withMessage('Grade is mandatory'),
+  check('Shared').isNumeric().withMessage('Shared must be numeric')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {  
@@ -116,13 +102,13 @@ app.put('/api/myworks/:id/edit', [
 
   try {
     const id = parseInt(req.params.id);
-    const { title, description, subject, grade, shared } = req.body;
+    const { NamePDF, Description, Subject, Grade, Shared } = req.body;
 
     const oldPdf = await getMyWorkById(id);
     if(!oldPdf || oldPdf.error){
       return res.status(404).json({error: 'Compito non trovato'});
     }
-    const result = await updateInfo(id, title, description, subject, grade, shared);
+    const result = await updateInfo(id, NamePDF, Description, Subject, Grade, Shared);
 
     if (result) {
       res.json(result);
@@ -130,7 +116,8 @@ app.put('/api/myworks/:id/edit', [
       res.status(404).json({error: result.error});
     }
   } catch (error) {
-    res.status(503).end();
+    console.error('Error updating mywork:', error);
+    res.status(503).json({error: error.message});
   }
 });
 
@@ -159,26 +146,26 @@ app.delete('/api/myworks/:id/delete', async (req, res) => {
 
 
       ////////////
-      //STUDENTI//
+      //SHARED//
       ////////////
 
-//restituisce l'elenco degli studenti
-//GET /api/studenti
-app.get('/api/studenti', isLoggedIn, isProfessore, async (req, res)=>{
+//get all shared works
+//GET /api/sharedworks
+app.get('/api/sharedworks', async (req, res)=>{
   try {
-    const studenti = await getListaStudenti(); 
-    res.json(studenti);
+    const sharedworks = await getAllSharedWorks(); 
+    res.json(sharedworks);
   } catch (error) {
     res.status(500).json({error: error.message});
   }
 });
 
-//restituisce uno studente in base al suo id
-//GET /api/studenti/:id_studente
-app.get('/api/studenti/:id_studente', isLoggedIn, async (req, res) => {
+//get shared work by id
+//GET /api/sharedworks/:id_sharedwork
+app.get('/api/sharedworks/:id_sharedwork', async (req, res) => {
   try {
-    const id = parseInt(req.params.id_studente);
-    const result = await getStudenteById(id); 
+    const id = parseInt(req.params.id_sharedwork);
+    const result = await getSharedWorkById(id); 
 
     if (result) {
       res.json(result);
@@ -190,173 +177,135 @@ app.get('/api/studenti/:id_studente', isLoggedIn, async (req, res) => {
   }
 });
 
-//restituisce i compiti di uno studente in base al suo id
-//GET /api/studenti/:id_studente/compiti
-app.get('/api/studenti/:id_studente/compiti', isLoggedIn,  async (req, res) =>{
-   const id_studente = parseInt(req.params.id_studente);
-
-    if (req.user.ruolo === 'studente') {
-      if (req.user.id_utente !== id_studente) {
-        return res.status(403).json({error: 'Non autorizzato'});
-      }
-    } 
-  
+//update download count of a shared work
+//PUT /api/sharedworks/:id_sharedwork/download
+app.put('/api/sharedworks/:id_sharedwork/download', async (req, res) => {
   try {
-    
-    const compiti = await getCompitiByIdStudente(id_studente); 
-    if(req.user.ruolo === 'professore') {
-      compiti.filter(c => c.id_prof === req.user.id_utente);
-    }
-
-      res.json(compiti);
-  } catch (error) {
-    res.status(500).json({error: error.message});
-  }
-});
-
-      //////////////
-      //PROFESSORI//
-      //////////////
-
-//restituisce i compiti di un professore in base al suo id
-//GET /api/professori/:id_prof/compiti
-app.get('/api/professori/:id_prof/compiti', isLoggedIn, isProfessore, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id_prof);
-
-     if (req.user.id_utente !== id) {
-      return res.status(403).json({error: 'Non autorizzato ad accedere ai dati di questo professore'});
-    }
-
-    const compiti = await getCompitiByIdInsegnante(id);
-
-    if (compiti.length > 0) {
-      res.json(compiti);
+    const id = parseInt(req.params.id_sharedwork);
+    const result = await download(id);
+    if (result) {
+      res.json(result);
     } else {
-      res.status(404).json({error: 'Nessun compito trovato per questo professore'});
+      res.status(404).json({error: 'shared work non trovato'});
     }
-  } catch (error) {
+  }
+  catch (error) {
     res.status(500).json({error: error.message});
   }
 });
 
-//restituisce lo stato della classe per un professore
-//GET /api/professori/:id_prof/statoclasse
-app.get('/api/professori/:id_prof/statoclasse', isLoggedIn, isProfessore, async (req, res) => {
+      //////////////
+      //CTREATEPDF//
+      //////////////
+
+//get all content by id
+app.get('/api/createpdf/:id_pdf/content', async (req, res)=>{
   try{
-  
-    const id_prof = parseInt(req.params.id_prof);
-    if (req.user.id_utente !== id_prof) {
-      return res.status(403).json({error: 'Non autorizzato'});
-    }
-    const sortBy = req.query.sort || 'cognome'; // default: alfabetico
-
-    const result = await getStatoClasse(id_prof, sortBy)
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-//verifica se due studenti possono lavorare insieme
-//GET /api/verifica-coppia/:id_studente1/:id_studente2/:id_prof
-app.get('/api/verifica-coppia/:id_studente1/:id_studente2/:id_prof', isLoggedIn, isProfessore, async (req, res) => {
-
-  const id_prof = parseInt(req.params.id_prof);
-  if (req.user.id_utente !== id_prof) {
-    return res.status(403).json({error: 'Non autorizzato'});
-  }
-
-  try {
-    const id_studente1 = parseInt(req.params.id_studente1);
-    const id_studente2 = parseInt(req.params.id_studente2);
-
-    const result = await verificaCoppia(id_studente1, id_studente2, id_prof); 
-
-    res.json({puo_lavorare_insieme: result})
-  } catch (error) {
-    res.status(500).json({error: error.message});
-  }
-});
-
-//Crea un nuovo compito per un professore
-//POST /api/professori/:id_prof/compiti/new
-app.post('/api/professori/:id_prof/compiti/new', isLoggedIn, isProfessore, [
-  check('domanda').notEmpty().withMessage('La domanda è obbligatoria'),
-  check('id_prof').isInt().withMessage('L\'ID del professore deve essere un numero intero'),
-  check('dimensione_gruppo').isInt({ min: 2, max:6 }).withMessage('Il gruppo deve essere composto da 2-6 studenti')
-], async(req, res)=>{
-  const id_prof = parseInt(req.params.id_prof);
-  if (req.user.id_utente !== id_prof) {
-    return res.status(403).json({error: 'Non autorizzato'});
-  }
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({ errors: errors.array() });
-  }
-
-  try{
-    const {domanda, dimensione_gruppo}= req.body;
-
-    const compito = {
-      domanda,
-      id_prof,
-      dimensione_gruppo,
-      stato: 'aperto', 
-      risposta: null,
-      voto: null 
-    };
-
-    const result = await creaCompito(compito); 
-    res.status(201).json(result);
+    const id_pdf = parseInt(req.params.id_pdf);
+    const content = await getContentById(id_pdf);
+    res.json(content);
   }catch (error) {
     res.status(500).json({error: error.message});
   }
 });
 
-        //////////
-        //GRUPPI//
-        //////////
-
-//restituisce gli studenti di un gruppo in base all'id del compito
-//GET /api/gruppi/compito/:id_compito
-app.get('/api/gruppi/compito/:id_compito', isLoggedIn, async (req, res) => {
-  try {
-    const id_task = parseInt(req.params.id_compito);
-    const result = await getGruppiByCompito(id_task); 
-
-    if (result.length > 0) {
-      res.json(result);
-    } else {
-      res.status(404).json({error: 'Nessun gruppo trovato per questo task'});
+//get specific content by id
+//Get /api/createpdf/:id/content
+app.get('/api/createpdf/:id_pdf/content/:id_content', async (req, res)=>{
+  try{
+    const id_pdf = parseInt(req.params.id_pdf);
+    const id_content = parseInt(req.params.id_content);
+    const contents = await getContentById(id_pdf);
+    const content = contents.find(c => c.ID === id_content);
+    if(content){
+      res.json(content);
+    }else{
+      res.status(404).json({error: 'Content not found'});
     }
-  } catch (error) {
+  }
+  catch (error) {
     res.status(500).json({error: error.message});
   }
 });
 
-//Crea un nuovo gruppo per un task 
-//POST /api/gruppi
-app.post('/api/gruppi', isLoggedIn, isProfessore, [
-  check('id_studente').notEmpty().withMessage('L\'ID dello studente non può essere vuoto'),
-  check('id_task').notEmpty().withMessage('L\'ID del task non può essere vuoto')
+
+//create new content for a pdf
+app.post('/api/createpdf/:id_pdf/content', [
+  check('type').notEmpty().withMessage('Type is mandatory'),
+  check('content').notEmpty().withMessage('Content is mandatory')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
-  }
-
+  }   
   try {
-    const id_task  = Number(req.body.id_task);
-    const id_studente = Number(req.body.id_studente);
-
-    const result = await creaGruppo(id_task, id_studente); 
-    res.status(201).json(result);
+    const id_pdf = parseInt(req.params.id_pdf);
+    const { type, content, answers } = req.body;
+    const createdContent = await createContentPDF(id_pdf, content, type, answers || null);
+    res.status(201).json(createdContent);
   } catch (error) {
-    res.status(503).json({error: error.message});
+    console.error('Error creating content:', error);
+    res.status(500).json({error: 'Error creating content', details: error.message});
   }
 });
+
+
+//update content for a pdf
+app.put('/api/createpdf/:id_pdf/content/:id_content/edit', [
+  check('type').notEmpty().withMessage('Type is mandatory'),
+  check('content').notEmpty().withMessage('Content is mandatory')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }   
+  try {
+    const id_content = parseInt(req.params.id_content);
+    const { type, content, answers } = req.body;
+    const result = await updateContentPDF(id_content, content, type, answers || null);
+    if (result) {
+      res.json(result);
+    }
+    else {
+      res.status(404).json({error: 'Content not found'});
+    }
+  } catch (error) {
+    console.error('Error updating content:', error);
+    res.status(500).json({error: 'Error updating content', details: error.message});
+  }
+});
+//delete all content for a pdf
+app.delete('/api/createpdf/:id_pdf/content/delete', async (req, res) => {
+  try {
+    const id_pdf = parseInt(req.params.id_pdf);
+    const result = await deleteAllContentPDF(id_pdf);
+    if (result) {
+      res.json(result);
+    }
+    else {
+      res.status(404).json({error: 'Content not found'});
+    }
+  } catch (error) {
+    res.status(500).json({error: 'Error deleting content'});
+  }
+});
+//delete specific content for a pdf
+app.delete('/api/createpdf/:id_pdf/content/:id_content/delete', async (req, res) => {
+  try {
+    const id_content = parseInt(req.params.id_content);
+    const result = await deleteContentPDF(id_content);
+    if (result) {
+      res.json(result);
+    }
+    else {
+      res.status(404).json({error: 'Content not found'});
+    }
+  } catch (error) {
+    res.status(500).json({error: 'Error deleting content'});
+  }
+});
+
+
 
 // activate the server
 app.listen(port, () => {
