@@ -24,6 +24,18 @@ function DefaultLayout() {
       <div className="layout-content">
         <Outlet />
       </div>
+
+      {/* Footer */}
+      <footer className="layout-footer">
+        <div className="layout-footer-content">
+          <p className="layout-footer-text">
+            Made by <span className="layout-footer-author">CTRL-U</span>
+          </p>
+          <p className="layout-footer-copyright">
+            © {new Date().getFullYear()} Sensei. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
