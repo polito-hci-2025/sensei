@@ -490,9 +490,43 @@ function HomePage() {
               type="button"
               className="homepage-work-menu-item"
               role="menuitem"
-              onClick={() => {
-                // Prototype: no-op for now
+              onClick={async () => {
                 closeWorkMenu();
+                if (!openWork) return;
+
+                const nextShared = openWork.shared ? 0 : 1;
+
+                try {
+                  await API.updateInfo(
+                    openWork.id,
+                    openWork.title,
+                    openWork.description,
+                    openWork.subject,
+                    openWork.grade,
+                    nextShared
+                  );
+
+                  setMyWorks((prev) =>
+                    prev.map((w) =>
+                      w.id === openWork.id
+                        ? {
+                            ...w,
+                            shared: Boolean(nextShared),
+                          }
+                        : w
+                    )
+                  );
+
+                  // Refresh shared list to reflect DB changes.
+                  setIsLoadingSharedWorks(true);
+                  setSharedWorksError('');
+                  const refreshed = await API.getAllShared();
+                  setSharedWorks(refreshed);
+                } catch (err) {
+                  setMyWorksError(err?.message ?? String(err));
+                } finally {
+                  setIsLoadingSharedWorks(false);
+                }
               }}
             >
               {openWork.shared ? 'Unshared' : 'Shared'}

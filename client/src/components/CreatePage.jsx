@@ -61,7 +61,7 @@ const buildDraftSuggestions = ({
   const questionMarks = (plain.match(/\?/g) || []).length;
   if (selectedType === 'question') {
     
-    // Prototype: trigger "too long" very early to make the feedback visible.
+   
     const longQuestionThreshold = dsaMode ? 5 : 8;
     if (words.length > longQuestionThreshold) {
       suggestions.push('The question is quite long. Try shortening it or splitting it into two questions.');
@@ -106,7 +106,7 @@ const buildDraftSuggestions = ({
     suggestions.push('For DSA: use bullet lists when possible.');
   }
 
-  // Small hygiene hints
+  
   if (/\s{2,}/.test(text || '')) {
     suggestions.push('There are multiple spaces. Consider cleaning spacing.');
   }
@@ -162,8 +162,7 @@ function ParagraphQuillEditor({ value, onChange, placeholder }) {
         // ignore
       }
 
-      // Snow theme inserts a toolbar as a sibling BEFORE the container.
-      // Since React doesn't own that node, we must remove it on unmount.
+      
       const maybeToolbar = quill.container?.previousSibling;
       if (maybeToolbar && maybeToolbar.classList?.contains('ql-toolbar')) {
         maybeToolbar.remove();
@@ -219,7 +218,7 @@ function CreatePage() {
     setParagraphs(Array.isArray(work.paragraphs) ? work.paragraphs : []);
     setSelectedDsaTypes(Array.isArray(work.dsaTypes) ? work.dsaTypes : []);
 
-    // Ensure we start in a neutral editing state.
+    
     setSelectedType(null);
     setEditingId(null);
     setDraftText('');
@@ -231,8 +230,7 @@ function CreatePage() {
   useEffect(() => {
     if (selectedType === 'paragraph') return;
 
-    // Defensive cleanup: Quill mutates the DOM and may leave toolbars around
-    // if the editor unmounts during rapid switches.
+    
     document
       .querySelectorAll('.cp-center-area .ql-toolbar, .cp-center-area .ql-container')
       .forEach((el) => el.remove());

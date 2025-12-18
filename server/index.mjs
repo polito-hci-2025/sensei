@@ -112,12 +112,38 @@ app.put('/api/myworks/:id/edit', [
   try {
     const id = parseInt(req.params.id);
     const { NamePDF, Description, Subject, Grade, Shared } = req.body;
+    const sharedValue = Number(Shared);
 
     const oldPdf = await getMyWorkById(id);
     if(!oldPdf || oldPdf.error){
       return res.status(404).json({error: 'Compito non trovato'});
     }
-    const result = await updateInfo(id, NamePDF, Description, Subject, Grade, Shared);
+    const result = await updateInfo(id, NamePDF, Description, Subject, Grade, sharedValue);
+
+    // Keep sharedworks table in sync when editing (including share toggle)
+    if (sharedValue === 1) {
+      // Preserve existing download count in sharedworks if present.
+      let downloadValue = oldPdf.Download ?? 0;
+      try {
+        const existing = await getSharedWorkById(id);
+        if (existing && !existing.error && existing.Download != null) {
+          downloadValue = existing.Download;
+        }
+      } catch {}
+
+      await upsertSharedWork({
+        id,
+        NamePDF,
+        Subject,
+        Grade,
+        Tag: oldPdf.Tag,
+        Description,
+        Download: downloadValue,
+        Prof: oldPdf.Prof,
+      });
+    } else {
+      await deleteSharedWork(id);
+    }
 
     if (result) {
       res.json(result);
