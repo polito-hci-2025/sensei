@@ -2,17 +2,9 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DefaultLayout from './components/DefaultLayout';
 import HomePage from './components/HomePage';
+import CreatePage from './components/CreatePage';
 
 // Placeholder components per le altre pagine
-const CreatePage = () => (
-  <div className="flex items-center justify-center h-full p-8">
-    <div className="text-center">
-      <h2 className="text-4xl font-bold text-gray-800 mb-4">Create New Lesson</h2>
-      <p className="text-gray-600">Start creating your educational content</p>
-    </div>
-  </div>
-);
-
 const PreviewPage = () => (
   <div className="flex items-center justify-center h-full p-8">
     <div className="text-center">

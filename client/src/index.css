@@ -15,6 +15,76 @@ body {
   background: white;
 }
 
+/* Global confirmation modal */
+.sensei-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 9999;
+}
+
+.sensei-confirm-modal {
+  width: min(420px, 100%);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.sensei-confirm-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.sensei-confirm-message {
+  margin: 0 0 1rem;
+  color: #4b5563;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.sensei-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.sensei-confirm-btn {
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  padding: 0.6rem 1rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sensei-confirm-btn.secondary {
+  background: #f5f5f5;
+  border-color: #e5e7eb;
+  color: #111827;
+}
+
+.sensei-confirm-btn.secondary:hover {
+  background: #e5e5e5;
+}
+
+.sensei-confirm-btn.primary {
+  background: linear-gradient(to right, #7c3aed, #f880f4);
+  color: white;
+}
+
+.sensei-confirm-btn.primary:hover {
+  filter: brightness(0.98);
+}
+
 #root {
   min-height: 100vh;
 }
