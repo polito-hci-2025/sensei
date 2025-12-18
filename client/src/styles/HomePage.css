@@ -12,6 +12,7 @@
   padding: 2rem 1.5rem;
   display: flex;
   flex-direction: column;
+  border-right: 2px solid #cbd5e1;
 }
 
 .homepage-sidebar h2 {
@@ -67,6 +68,36 @@
 
 .homepage-work-card-menu:hover {
   color: #374151;
+}
+
+.homepage-work-menu {
+  position: fixed;
+  min-width: 170px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 16px rgb(0 0 0 / 0.12);
+  padding: 0.25rem;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.homepage-work-menu-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.6rem;
+  color: #111827;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.homepage-work-menu-item:hover {
+  background: #f3f4f6;
 }
 
 .homepage-work-card h4 {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Save, FileText, HelpCircle, Trash2 } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 import Quill from 'quill';
@@ -191,6 +191,7 @@ function ParagraphQuillEditor({ value, onChange, placeholder }) {
 
 function CreatePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedType, setSelectedType] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [paragraphs, setParagraphs] = useState([]);
@@ -205,6 +206,27 @@ function CreatePage() {
   const [draftAnswers, setDraftAnswers] = useState(['', '']);
 
   const dsaTypes = ['Dysgraphia', 'Dyslexia', 'Dyscalculia', 'Dysorthography'];
+
+  const didPrefillFromState = useRef(false);
+
+  useEffect(() => {
+    if (didPrefillFromState.current) return;
+    const work = location.state?.work;
+    if (!work) return;
+
+    didPrefillFromState.current = true;
+    setQuestions(Array.isArray(work.questions) ? work.questions : []);
+    setParagraphs(Array.isArray(work.paragraphs) ? work.paragraphs : []);
+    setSelectedDsaTypes(Array.isArray(work.dsaTypes) ? work.dsaTypes : []);
+
+    // Ensure we start in a neutral editing state.
+    setSelectedType(null);
+    setEditingId(null);
+    setDraftText('');
+    setDraftParagraphHtml('');
+    setDraftQuestionType('true_false');
+    setDraftAnswers(['', '']);
+  }, [location.state]);
 
   useEffect(() => {
     if (selectedType === 'paragraph') return;
