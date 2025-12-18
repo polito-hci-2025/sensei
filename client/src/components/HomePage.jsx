@@ -1,82 +1,36 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import {useState, useEffect} from 'react';
+import { useNavigate } from 'react-router';
 import { ArrowDown } from 'lucide-react';
+import API from '../API/API.mjs';
 import '../styles/HomePage.css';
 
 function HomePage() {
   const navigate = useNavigate();
 
-  const myWorks = [
-    { id: 1, title: 'Giulio cesare quiz', status: 'created' },
-    { id: 2, title: 'WW2 Lesson', status: 'adapted' },
-    { id: 3, title: 'History Quiz', status: 'created' }
-  ];
+  const [myWorks, setMyWorks] = useState([]);
+  const [mostDownloaded, setMostDownloaded] = useState([]);
+  const [recentlyShared, setRecentlyShared] = useState([]);
 
-  const mostDownloaded = [
-    {
-      id: 1,
-      title: 'Napoleon',
-      subtitle: 'Lesson with visual support',
-      category: 'Dyslexia',
-      subject: 'History',
-      grade: 'Grade 3',
-      author: 'Prof Morello',
-      downloads: 56
-    },
-    {
-      id: 2,
-      title: 'Roman History',
-      subtitle: 'Roman Empire Lesson',
-      category: 'Dyslexia',
-      subject: 'History',
-      grade: 'Grade 1',
-      author: 'Prof Mileto',
-      downloads: 42
-    },
-    {
-      id: 3,
-      title: 'Solar System',
-      subtitle: 'Introduction to solar system',
-      category: 'Dysgraphia',
-      subject: 'Science',
-      grade: 'Grade 2',
-      author: 'Prof Morello',
-      downloads: 100
-    }
-  ];
+  useEffect(() => {
+    fetchMyWorks();
+    fetchMostDownloaded();
+    fetchRecentlyShared();
+  }, []);
 
-  const recentlyShared = [
-    {
-      id: 1,
-      title: 'Leopardi',
-      subtitle: "Giacomo Leopardi's life and works",
-      category: 'Dyslexia',
-      subject: 'Italian',
-      grade: 'Grade 5',
-      author: 'Prof Morello',
-      downloads: 15
-    },
-    {
-      id: 2,
-      title: 'Second Grade Eq...',
-      subtitle: 'Exercises',
-      category: 'Dyscalculia',
-      subject: 'Math',
-      grade: 'Grade 2',
-      author: 'Prof Morello',
-      downloads: 5
-    },
-    {
-      id: 3,
-      title: 'Industrial Revolut...',
-      subtitle: 'Lesson',
-      category: 'Dyslexia',
-      subject: 'History',
-      grade: 'Grade 4',
-      author: 'Prof Verdi',
-      downloads: 9
-    }
-  ];
+  const fetchMyWorks = async () => {
+    const works = await API.getAllMyWorks();
+    setMyWorks(works);
+  }
+  
+  const fetchMostDownloaded = async () => {
+    const download = await API.getAllShared();
+    setMostDownloaded(download);
+  }
+
+  const fetchRecentlyShared = async () => {
+    const shared = await API.getAllShared();
+    setRecentlyShared(shared);
+  }
 
   const getCategoryClass = (category) => {
     const classes = {
@@ -89,32 +43,32 @@ function HomePage() {
 
   const LessonCard = ({ lesson }) => (
     <div 
-      className={`homepage-lesson-card ${getCategoryClass(lesson.category)}`}
+      className={`homepage-lesson-card ${getCategoryClass(lesson.Type)}`}
     >
       <div className="homepage-lesson-card-header">
-        <span className="homepage-lesson-card-category">{lesson.category}</span>
+        <span className="homepage-lesson-card-category">{lesson.Type}</span>
         <div className="homepage-lesson-card-downloads">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
             <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
             <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
           </svg>
-          <span>{lesson.downloads}</span>
+          <span>{lesson.Download}</span>
         </div>
       </div>
       
-      <h3>{lesson.title}</h3>
-      <p className="homepage-lesson-card-subtitle">{lesson.subtitle}</p>
+      <h3>{lesson.NamePDF}</h3>
+      <p className="homepage-lesson-card-subtitle">{lesson.Description}</p>
       
       <div className="homepage-lesson-card-tags">
-        <span className={`homepage-lesson-card-tag category-${lesson.category.toLowerCase()}`}>{lesson.subject}</span>
-        <span className="homepage-lesson-card-tag grade">{lesson.grade}</span>
+        <span className={`homepage-lesson-card-tag category-${lesson.Type}`}>{lesson.Subject}</span>
+        <span className="homepage-lesson-card-tag grade">{lesson.Grade}</span>
       </div>
       
       <div className="homepage-lesson-card-footer">
-        <span className="homepage-lesson-card-author">by {lesson.author}</span>
+        <span className="homepage-lesson-card-author">by {lesson.Prof}</span>
         <button 
           className="homepage-lesson-card-button"
-          onClick={() => navigate(`/view/${lesson.id}`)}
+          onClick={() => navigate(`/shared/preview/${lesson.id}`)}
         >
           View
         </button>
@@ -125,7 +79,7 @@ function HomePage() {
   const MyWorkCard = ({ work }) => (
     <div 
       className="homepage-work-card"
-      onClick={() => navigate(`/edit/${work.id}`)}
+      onClick={() => navigate(`/${work.Type}/preview/${work.id_pdf}`)}
     >
       <button 
         className="homepage-work-card-menu" 
@@ -136,8 +90,8 @@ function HomePage() {
         </svg>
       </button>
       <div>
-        <h4>{work.title}</h4>
-        <span>{work.status}</span>
+        <h4>{work.NamePDF}</h4>
+        <span>{work.Type}</span>
       </div>
     </div>
   );
@@ -151,7 +105,7 @@ function HomePage() {
           
           <div className="homepage-works-list">
             {myWorks.map(work => (
-              <MyWorkCard key={work.id} work={work} />
+              <MyWorkCard key={work.id_pdf} work={work} />
             ))}
           </div>
         </div>

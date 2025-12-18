@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DefaultLayout from './components/DefaultLayout';
 import HomePage from './components/HomePage';
+import PreviewPage from './components/PreviewPage';
 
 // Placeholder components per le altre pagine
 const CreatePage = () => (
@@ -13,14 +14,6 @@ const CreatePage = () => (
   </div>
 );
 
-const PreviewPage = () => (
-  <div className="flex items-center justify-center h-full p-8">
-    <div className="text-center">
-      <h2 className="text-4xl font-bold text-gray-800 mb-4">Preview</h2>
-      <p className="text-gray-600">Review your lesson before publishing</p>
-    </div>
-  </div>
-);
 
 const AdaptPage = () => (
   <div className="flex items-center justify-center h-full p-8">
@@ -49,15 +42,6 @@ const EditPage = () => (
   </div>
 );
 
-const ViewPage = () => (
-  <div className="flex items-center justify-center h-full p-8">
-    <div className="text-center">
-      <h2 className="text-4xl font-bold text-gray-800 mb-4">View Lesson</h2>
-      <p className="text-gray-600">Lesson content details</p>
-    </div>
-  </div>
-);
-
 const NotFound = () => (
   <div className="flex items-center justify-center h-full p-8">
     <div className="text-center">
@@ -74,17 +58,16 @@ function App() {
         <Route path="/" element={<HomePage />} />
         
         <Route path="/create" element={<CreatePage />} />
-        <Route path="/create/preview" element={<PreviewPage />} />
-        
+        <Route path="/create/preview" element={<PreviewPage type="created" />} />
+
+        <Route path="/:type/preview/:id" element={<PreviewPage />} />
+
         <Route path="/adapt" element={<AdaptPage />} />
-        <Route path="/adapt/preview" element={<PreviewPage />} />
         
         <Route path="/shared" element={<SharedPage />} />
         
         <Route path="/edit/:id" element={<EditPage />} />
-        
-        <Route path="/view/:id" element={<ViewPage />} />
-        
+                
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

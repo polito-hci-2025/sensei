@@ -1,5 +1,5 @@
 function MyWork(id_pdf, NamePDF, Subject, Grade, Tag, Description, Shared,Download, Prof, Type){
-    this.id_pdfa=id_pdf,
+    this.id_pdf=id_pdf,
     this.NamePDF=NamePDF,
     this.Subject=Subject,
     this.Grade=Grade,

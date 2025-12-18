@@ -1,165 +1,55 @@
-import {Compito, Gruppo, Utente} from '../models/models.mjs';
+import {MyWork, Shared, CreatePDF} from '../models/models.mjs';
 const SERVER_URL = 'http://localhost:3001';
 
         ///////////
-        //COMPITI//
+        //MYWORKS//
         ///////////
 
-//GET /api/compiti/:id 
-const getCompitoById = async (id) => {
-    const response = await fetch(SERVER_URL + '/api/compiti/' + id,{
+//GET /api/myworks/:id
+const getMyWorkById = async (id) => {
+    const response = await fetch(SERVER_URL + '/api/myworks/' + id,{
         credentials: 'include'
     });
     if(response.ok){
-        const compitoJson = await response.json();
-        return new Compito(compitoJson.id_compito, compitoJson.domanda, compitoJson.id_prof, compitoJson.dimensione_gruppo, compitoJson.stato, compitoJson.risposta, compitoJson.voto);
+        const mywork = await response.json();
+        return new MyWork(mywork.id_pdf, mywork.NamePDF, mywork.Subject, mywork.Grade, mywork.Tag, mywork.Description, mywork.Shared, mywork.Download, mywork.Prof, mywork.Type);
     }
     else
         throw new Error("Internal server error");
 }
 
-//PUT /api/compiti/:id/risposta 
-const updateRispostaCompito = async (id_compito, risposta) => {
-    const response = await fetch(SERVER_URL + '/api/compiti/' + id_compito + '/risposta', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({risposta})
-    });
-    if(!response.ok){
-        let message = "Errore durante l'invio della risposta";
-        try{
-            const error = await response.json();
-            message = error.error || error.message || message;
-        } catch(e){
-             if (response.status === 409) {
-                message = "Il compito è stato chiuso e non può più essere modificato";
-            }
-        }
-        throw new Error(message);
-    }
-    return await response.json();
-}
-
-//PUT /api/compiti/:id/voto 
-const updateVotoCompito = async (id_compito, voto) => {
-    const response = await fetch(SERVER_URL + '/api/compiti/' + id_compito + '/voto', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({voto})
-    });
-    
-     if (!response.ok) {
-        throw new Error('Errore durante l\'impostazione del voto');
-    }
-    else {
-        return null; 
-    }
-}
-
-
-//STUDENTI 
-//GET /api/studenti 
-const getListaStudenti = async () => {
-    const response = await fetch(SERVER_URL + '/api/studenti',{
+//GET /api/myworks
+const getAllMyWorks = async () => {
+    const response = await fetch(SERVER_URL + '/api/myworks',{
         credentials: 'include'
     });
     if(response.ok){
-        const studentiJson = await response.json();
-        return studentiJson.map(s => new Utente(s.id_utente, s.username, s.password, s.salt, s.ruolo, s.nome, s.cognome));
+        const myworksJson = await response.json();
+        console.log("myworksJson", myworksJson);
+        return myworksJson.map(s => new MyWork(s.id_pdf, s.NamePDF, s.Subject, s.Grade, s.Tag, s.Description, s.Shared, s.Download, s.Prof, s.Type));
     }
     else
         throw new Error("Internal server error");
 }
 
-//GET /api/studenti/:id_studente 
-const getStudenteById = async (id_studente) => {
-    const response = await fetch(SERVER_URL + '/api/studenti/' + id_studente,{
-        credentials: 'include'
-    });
-    if(response.ok){
-        const studenteJson = await response.json();
-        return new Utente(studenteJson.id_studente, studenteJson.nome, studenteJson.cognome, studenteJson.email, studenteJson.password, studenteJson.id_prof);
-    }
-    else
-        throw new Error("Internal server error");
-}
-
-//GET /api/studenti/:id_studente/compiti 
-const getCompitiByIdStudente = async (id_studente) => {
-    const response = await fetch(SERVER_URL + '/api/studenti/' + id_studente + '/compiti',{
-        credentials: 'include'
-    });
-    if(response.ok){
-        const compitiJson = await response.json();
-        return compitiJson.map(c => new Compito(c.id_compito, c.domanda, c.id_prof, c.dimensione_gruppo, c.stato, c.risposta, c.voto));
-    }
-    else
-        throw new Error("Internal server error");
-}
-
-            //////////////
-            //PROFESSORI//
-            //////////////  
-
-//GET /api/professori/:id_prof/compiti 
-const getCompitiByProf = async (id_prof) => {
-    const response = await fetch(SERVER_URL + '/api/professori/' + id_prof + '/compiti',{
-        credentials: 'include'
-    });
-    if(response.ok){
-        const compitiJson = await response.json();
-        return compitiJson.map(c => new Compito(c.id_compito, c.domanda, c.id_prof, c.dimensione_gruppo, c.stato, c.risposta, c.voto));
-    }
-    else
-        throw new Error("Internal server error");
-}
-
-//GET /api/professori/:id_prof/statoclasse 
-const getStatoClasse = async (id_prof, sort = 'alfabetico') => {
-  const response = await fetch(SERVER_URL + '/api/professori/' + id_prof + '/statoclasse?sort=' + sort, {
-    credentials: 'include'
-  });
-  if (response.ok) {
-    return await response.json();
-  } else {
-    throw new Error("Errore nel caricamento dello stato classe");
-  }
-};
-
-//GET /api/verifica-coppia/:id_studente1/:id_studente2/:id_prof 
-const verificaCoppia = async (id_studente1, id_studente2, id_prof) => {
-    const response = await fetch(SERVER_URL + '/api/verifica-coppia/' + id_studente1 + '/' + id_studente2 +'/'+ id_prof, {
-        credentials: 'include'
-    });
-    if(response.ok){
-        const verificaJson = await response.json();
-        return verificaJson;
-    }
-    else
-        throw new Error("Internal server error");
-}
-
-//POST /api/professori/:id_prof/compiti/new 
-const creaCompito = async (compito) => {
-    const response = await fetch(SERVER_URL + '/api/professori/' + compito.id_prof + '/compiti/new', {
+//POST /api/myworks/create
+const createPDF = async (pdf) => {
+    const response = await fetch(SERVER_URL + '/api/myworks/create', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({
-            domanda: compito.domanda,
-            id_prof: compito.id_prof,
-            dimensione_gruppo: compito.dimensione_gruppo,
-            stato: 'aperto',
-            risposta: null,
-            voto: null
+            NamePDF: pdf.NamePDF,
+            Subject: pdf.Subject,
+            Grade: pdf.Grade,
+            Tag: pdf.Tag,
+            Description: pdf.Description,
+            Shared: pdf.Shared,
+            Download: pdf.Download,
+            Prof: pdf.Prof,
+            Type: pdf.Type
         })
     });
 
@@ -177,108 +67,271 @@ const creaCompito = async (compito) => {
     }
 }
 
-            //////////
-            //GRUPPI//
-            //////////
+//aggiorna info di un mywork
+//PUT /api/myworks/:id/edit
+const updateInfo = async (id_pdf, NamePDF, Description, Subject, Grade, Shared) => {
+    const response = await fetch(SERVER_URL + '/api/myworks/' + id_pdf + '/edit', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({NamePDF, Description, Subject, Grade, Shared})
+    });
+    if(!response.ok){
+        let message = "Errore durante la modifica delle informazioni";
+        try{
+            const error = await response.json();
+            message = error.error || error.message || message;
+        } catch(e){
+             if (response.status === 409) {
+                message = "Non è possibile modificare le info";
+            }
+        }
+        throw new Error(message);
+    }
+    return await response.json();
+}
 
-//GET /api/gruppi/compito/:id_compito 
-const getGruppiByCompito = async (id_task) => {
-    const response = await fetch(SERVER_URL + '/api/gruppi/compito/' + id_task, {
+const deleteMyWork = async (id_pdf) => {
+    const response = await fetch(SERVER_URL + '/api/myworks/' + id_pdf + '/delete', {
+        method: 'DELETE',
+        credentials: 'include'
+    });
+    if(!response.ok){
+        let message = "Errore durante la cancellazione del compito";
+        try{
+            const error = await response.json();
+            message = error.error || error.message || message;
+        } catch(e){
+             if (response.status === 409) {
+                message = "Non è possibile cancellare il compito";
+            }
+        }
+        throw new Error(message);
+    }
+    return null;
+}
+
+
+        ////////////
+        //SHARED//
+        ////////////
+
+//get all shared works
+//GET /api/sharedworks
+const getAllShared = async () => {
+    const response = await fetch(SERVER_URL + '/api/sharedworks',{
+        method: 'GET',
         credentials: 'include'
     });
     if(response.ok){
-        const gruppiJson = await response.json();
-        return gruppiJson;
+        const sharedWork = await response.json();
+        return sharedWork.map(s => new Shared(s.id, s.NamePDF, s.Subject, s.Grade, s.Tag, s.Description, s.Shared, s.Download, s.Prof));
     }
     else
         throw new Error("Internal server error");
 }
 
-//POST /api/gruppi 
-const creaGruppo = async (id_task, id_studente) => {
-    const response = await fetch(SERVER_URL + '/api/gruppi', {
+//get shared work by id
+//GET /api/sharedworks/:id_sharedwork
+const getSharedWorkById = async (id) => {
+    const response = await fetch(SERVER_URL + '/api/sharedworks/' + id,{
+        method: 'GET',
+        credentials: 'include'
+    });
+    if(response.ok){
+        const shared = await response.json();
+        return new Shared(shared.id, shared.NamePDF, shared.Subject, shared.Grade, shared.Tag, shared.Description, shared.Shared, shared.Download, shared.Prof);
+    }
+    else
+        throw new Error("Internal server error");
+}
+
+//update download count of a shared work
+//PUT /api/sharedworks/:id_sharedwork/download
+const download = async (id) => {
+    const response = await fetch(SERVER_URL + '/api/sharedworks/' + id + '/download', {
+        method: 'PUT',
+        credentials: 'include'
+    });
+    if(!response.ok){
+        let message = "Errore durante l'aggiornamento del contatore di download";
+        try{
+            const error = await response.json();
+            message = error.error || error.message || message;
+        } catch(e){
+            if (response.status === 404) {
+                message = "Shared work non trovato";
+            }
+        }
+        throw new Error(message);
+    }
+    return await response.json();
+}
+
+
+            //////////////
+            //CREATEPDF//
+            //////////////  
+
+//get all content by id
+const getAllContentByPdf = async (id) => {
+    const response = await fetch(`${SERVER_URL}/api/createpdf/${id}/content`, {
+        credentials: 'include'
+    });
+
+    if (response.ok) {
+        const contents = await response.json();
+        
+        return contents.map(c => new CreatePDF(
+            c.id, 
+            c.id_pdf, 
+            c.Content, 
+            c.Type, 
+            c.Answers
+        ));
+    } else {
+        let message = "Internal server error";
+        try {
+            const err = await response.json();
+            message = err.error || message;
+        } catch(e) {}
+        throw new Error(message);
+    }
+}
+
+//get specific content by id
+//Get /api/createpdf/:id/content/:id_content
+const getContentById = async (id, id_content) => {
+    const response = await fetch(SERVER_URL + '/api/createpdf/' + id + '/content/' + id_content , {
+        credentials: 'include'
+    });
+    if (response.ok) {
+        const c = await response.json();
+        return new CreatePDF(c.id, c.id_pdf, c.Content, c.Type, c.Answers);
+    } else {
+        let message = "Errore nel caricamento del contenuto";
+        try {
+            const errorData = await response.json();
+            message = errorData.error || message;
+        } catch (e) {}
+        throw new Error(message);
+    }
+};
+
+//create new content for a pdf
+const createContentPDF = async (id_pdf, content, type, answers) => {
+    const response = await fetch(SERVER_URL + '/api/createpdf/' + id_pdf + '/content', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({
-            id_task: id_task,
-            id_studente: id_studente
+            content: content,
+            type: type,
+            answers: answers
         })
     });
     if(!response.ok) {
         const error = await response.json();
-        throw new Error(error.message);
+
+        let errorMessage = "Errore durante la creazione del contenuto";
+        if (error.errors && Array.isArray(error.errors)) {
+            errorMessage = error.errors.map(err => err.msg).join(', ');
+        } 
+        else if (error.error) {
+            errorMessage = error.error;
+        }
+        throw new Error(errorMessage);
     }
     return await response.json();
 }
 
-            //////////////////
-            //AUTENTICAZIONE//
-            //////////////////
-
-//POST /api/sessions
-const logIn = async(credentials) => {
-    const res = await fetch(SERVER_URL + '/api/sessions', {
-        method: 'POST',
+const updateContentPDF = async (id_pdf, id_content, content, type, answers) => {
+    const response = await fetch(SERVER_URL + '/api/createpdf/' + id_pdf + '/content/' + id_content + '/edit', {
+        method: 'PUT',
         headers: {
-            'Content-Type': 'application/json', 
+            'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({
+            content: content,
+            type: type,
+            answers: answers
+        })
     });
-    if(res.ok) {
-        const userJson = await res.json();
-        return userJson;
-    }else {
-        const errDetails= await res.text();
-        throw errDetails;
+    if(!response.ok) {
+        const error = await response.json();
+        let errorMessage = "Errore durante l'aggiornamento del contenuto";
+        if (error.errors && Array.isArray(error.errors)) {
+            errorMessage = error.errors.map(err => err.msg).join(', ');
+        }
+        else if (error.error) {
+            errorMessage = error.error;
+        }
+        throw new Error(errorMessage);
     }
-};
+    return await response.json();
+}
 
-//GET /api/sessions/current
-const getUserInfo = async ()=> {
-    const res = await fetch(SERVER_URL + '/api/sessions/current', {
-        credentials: 'include',
-    });
-    const user = await res.json();
-    if(res.ok){
-        return user;
-    } else {
-        throw user;
-    }
-};
-
-//DELETE /api/sessions/current
-const logOut = async ()=> {
-    const res = await fetch(SERVER_URL +'/api/sessions/current', {
+//delete all content for a pdf
+const deleteAllContentPDF = async (id_pdf) => {
+    const response = await fetch(SERVER_URL + '/api/createpdf/' + id_pdf + '/content/delete', {
         method: 'DELETE',
         credentials: 'include'
     });
-    if(res.ok)
-        return null;
-    else {
-    const error = await response.json();
-    throw error;
-  }
+    if(!response.ok){
+        let message = "Errore durante la cancellazione dei contenuti";
+        try{
+            const error = await response.json();
+            message = error.error || error.message || message;
+        } catch(e){
+             if (response.status === 409) {
+                message = "Non è possibile cancellare i contenuti";
+            }
+        }
+        throw new Error(message);
+    }
+    return null;
+}
+
+//delete specific content for a pdf
+const deleteContentPDF = async (id_pdf, id_content) => {
+    const response = await fetch(SERVER_URL + '/api/createpdf/' + id_pdf + '/content/' + id_content + '/delete', {
+        method: 'DELETE',
+        credentials: 'include'
+    });
+    if(!response.ok){
+        let message = "Errore durante la cancellazione del contenuto";
+        try{
+            const error = await response.json();
+            message = error.error || error.message || message;
+        } catch(e){
+             if (response.status === 409) {
+                message = "Non è possibile cancellare il contenuto";
+            }
+        }
+        throw new Error(message);
+    }
+    return null;
 }
 
 const API = {
-    getCompitoById,
-    getCompitiByProf,
-    getCompitiByIdStudente,
-    creaCompito,
-    updateRispostaCompito,
-    updateVotoCompito,
-    getGruppiByCompito,
-    creaGruppo,
-    verificaCoppia,
-    getListaStudenti,
-    getStudenteById,
-    getStatoClasse,
-    logIn,
-    getUserInfo,
-    logOut
+    getMyWorkById,
+    getAllMyWorks,
+    createPDF,
+    updateInfo,
+    deleteMyWork,
+    getAllShared,
+    getSharedWorkById,
+    download,
+    getAllContentByPdf,
+    getContentById,
+    createContentPDF,
+    updateContentPDF,
+    deleteAllContentPDF,
+    deleteContentPDF
 };
 export default API;
