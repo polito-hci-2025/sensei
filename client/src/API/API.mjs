@@ -1,5 +1,53 @@
-import {MyWork, Shared, CreatePDF} from '../models/models.mjs';
 const SERVER_URL = 'http://localhost:3001';
+
+const normalizeId = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+};
+
+const normalizeMyWork = (raw) => {
+    const id = normalizeId(raw?.ID ?? raw?.id_pdfa ?? raw?.id_pdf ?? raw?.id);
+    return {
+        id,
+        title: raw?.NamePDF ?? raw?.title ?? '',
+        subject: raw?.Subject ?? '',
+        grade: raw?.Grade ?? '',
+        tag: raw?.Tag ?? '',
+        description: raw?.Description ?? '',
+        shared: Boolean(Number(raw?.Shared ?? raw?.shared ?? 0)),
+        download: Number(raw?.Download ?? raw?.download ?? 0) || 0,
+        prof: raw?.Prof ?? '',
+        status: raw?.Type ?? raw?.status ?? '',
+        _raw: raw,
+    };
+};
+
+const normalizeSharedWork = (raw) => {
+    const id = normalizeId(raw?.ID ?? raw?.id);
+    return {
+        id,
+        title: raw?.NamePDF ?? raw?.title ?? '',
+        subject: raw?.Subject ?? '',
+        grade: raw?.Grade ?? '',
+        tag: raw?.Tag ?? '',
+        description: raw?.Description ?? '',
+        shared: Boolean(Number(raw?.Shared ?? raw?.shared ?? 0)),
+        download: Number(raw?.Download ?? raw?.download ?? 0) || 0,
+        prof: raw?.Prof ?? '',
+        _raw: raw,
+    };
+};
+
+const normalizeCreatePdfContent = (raw) => {
+    return {
+        id: normalizeId(raw?.ID ?? raw?.id),
+        pdfId: normalizeId(raw?.ID_PDF ?? raw?.id_pdf ?? raw?.idPdf ?? raw?.ID_pdf),
+        content: raw?.Content ?? raw?.content ?? '',
+        type: raw?.Type ?? raw?.type ?? '',
+        answers: raw?.Answers ?? raw?.answers ?? null,
+        _raw: raw,
+    };
+};
 
         ///////////
         //MYWORKS//
@@ -12,7 +60,7 @@ const getMyWorkById = async (id) => {
     });
     if(response.ok){
         const mywork = await response.json();
-        return new MyWork(mywork.id_pdf, mywork.NamePDF, mywork.Subject, mywork.Grade, mywork.Tag, mywork.Description, mywork.Shared, mywork.Download, mywork.Prof, mywork.Type);
+        return normalizeMyWork(mywork);
     }
     else
         throw new Error("Internal server error");
@@ -25,8 +73,7 @@ const getAllMyWorks = async () => {
     });
     if(response.ok){
         const myworksJson = await response.json();
-        console.log("myworksJson", myworksJson);
-        return myworksJson.map(s => new MyWork(s.id_pdf, s.NamePDF, s.Subject, s.Grade, s.Tag, s.Description, s.Shared, s.Download, s.Prof, s.Type));
+        return myworksJson.map(normalizeMyWork).filter((w) => w.id !== null);
     }
     else
         throw new Error("Internal server error");
@@ -127,7 +174,7 @@ const getAllShared = async () => {
     });
     if(response.ok){
         const sharedWork = await response.json();
-        return sharedWork.map(s => new Shared(s.id, s.NamePDF, s.Subject, s.Grade, s.Tag, s.Description, s.Shared, s.Download, s.Prof));
+        return sharedWork.map(normalizeSharedWork).filter((w) => w.id !== null);
     }
     else
         throw new Error("Internal server error");
@@ -142,7 +189,7 @@ const getSharedWorkById = async (id) => {
     });
     if(response.ok){
         const shared = await response.json();
-        return new Shared(shared.id, shared.NamePDF, shared.Subject, shared.Grade, shared.Tag, shared.Description, shared.Shared, shared.Download, shared.Prof);
+        return normalizeSharedWork(shared);
     }
     else
         throw new Error("Internal server error");
@@ -183,14 +230,7 @@ const getAllContentByPdf = async (id) => {
 
     if (response.ok) {
         const contents = await response.json();
-        
-        return contents.map(c => new CreatePDF(
-            c.id, 
-            c.id_pdf, 
-            c.Content, 
-            c.Type, 
-            c.Answers
-        ));
+        return contents.map(normalizeCreatePdfContent).filter((c) => c.id !== null);
     } else {
         let message = "Internal server error";
         try {
@@ -209,7 +249,7 @@ const getContentById = async (id, id_content) => {
     });
     if (response.ok) {
         const c = await response.json();
-        return new CreatePDF(c.id, c.id_pdf, c.Content, c.Type, c.Answers);
+        return normalizeCreatePdfContent(c);
     } else {
         let message = "Errore nel caricamento del contenuto";
         try {
