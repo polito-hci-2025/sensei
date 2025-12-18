@@ -27,9 +27,18 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow same-origin / curl / Postman
+    if (!origin) return callback(null, true);
+
+    // Allow Vite dev server ports (5173, 5174, ...)
+    const isViteLocalhost = /^http:\/\/localhost:517\d$/.test(origin);
+    if (isViteLocalhost) return callback(null, true);
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   optionsSuccessState: 200,
-  credentials: true
+  credentials: true,
 };
 
 app.use(cors(corsOptions));

@@ -7,25 +7,25 @@
 }
 
 .homepage-sidebar {
-  width: 22rem;
+  width: 19rem;
   background-color: transparent;
-  padding: 2rem 1.5rem;
+  padding: 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
   border-right: 2px solid #cbd5e1;
 }
 
 .homepage-sidebar h2 {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #111827;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .homepage-works-section {
   background-color: white;
   border-radius: 1rem;
-  padding: 1.5rem;
+  padding: 1.25rem;
   margin-bottom: 1.5rem;
 }
 
@@ -42,7 +42,7 @@
 .homepage-work-card {
   background: #f5f5f5;
   border-radius: 0.875rem;
-  padding: 1rem 1.25rem;
+  padding: 0.85rem 1rem;
   position: relative;
   cursor: pointer;
   border: none;
@@ -124,10 +124,10 @@
 .homepage-action-button {
   width: 100%;
   color: white;
-  padding: 0.875rem 0;
+  padding: 0.75rem 0;
   border-radius: 9999px;
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
   transition: all 0.2s;
   border: none;
@@ -170,7 +170,7 @@
 
 .homepage-main-content {
   flex: 1;
-  padding: 2.5rem 3rem;
+  padding: 1.75rem 2rem;
   overflow-y: auto;
   background-color: transparent;
 }
@@ -180,22 +180,22 @@
 }
 
 .homepage-section h2 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #111827;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.25rem;
 }
 
 .homepage-lessons-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .homepage-lesson-card {
   background: white;
   border-radius: 1.25rem;
-  padding: 1.75rem;
+  padding: 1.25rem;
   position: relative;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
   transition: all 0.2s;
@@ -221,16 +221,25 @@
   border-radius: 0.5rem;
 }
 
+.homepage-lesson-card-categories {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.homepage-lesson-card-category.category-dyslexia,
 .homepage-lesson-card.dyslexia .homepage-lesson-card-category {
   background-color: #e8e5f0;
   color: #7c3aed;
 }
 
+.homepage-lesson-card-category.category-dysgraphia,
 .homepage-lesson-card.dysgraphia .homepage-lesson-card-category {
   background-color: #dbeafe;
   color: #2563eb;
 }
 
+.homepage-lesson-card-category.category-dyscalculia,
 .homepage-lesson-card.dyscalculia .homepage-lesson-card-category {
   background-color: #fce7f3;
   color: #db2777;
@@ -249,7 +258,7 @@
 }
 
 .homepage-lesson-card h3 {
-  font-size: 1.375rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #111827;
   margin-bottom: 0.5rem;
@@ -272,6 +281,8 @@
   padding: 0.4rem 0.875rem;
   border-radius: 9999px;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Category-based colored tags */
@@ -288,6 +299,43 @@
 .homepage-lesson-card-tag.category-dyscalculia {
   background-color: #fce7f3;
   color: #db2777;
+}
+
+/* Subject-based colored tags (uses existing palette) */
+.homepage-lesson-card-tag.subject-history {
+  background-color: #e8e5f0;
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+}
+
+.homepage-lesson-card-tag.subject-math {
+  background-color: #fce7f3;
+  color: #db2777;
+  border: 1px solid rgba(219, 39, 119, 0.35);
+}
+
+.homepage-lesson-card-tag.subject-geography {
+  background-color: #e0f2fe;
+  color: #0891b2;
+  border: 1px solid rgba(8, 145, 178, 0.35);
+}
+
+.homepage-lesson-card-tag.subject-science {
+  background-color: #dbeafe;
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+}
+
+.homepage-lesson-card-tag.subject-music {
+  background-color: #fef3e6;
+  color: #d97706;
+  border: 1px solid rgba(217, 119, 6, 0.35);
+}
+
+.homepage-lesson-card-tag.subject-default {
+  background-color: #e8e5f0;
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.35);
 }
 
 /* Grade tags with gray background */
@@ -313,15 +361,49 @@
 .homepage-lesson-card-button {
   background-color: #7c3aed;
   color: white;
-  padding: 0.625rem 1.75rem;
+  padding: 0.55rem 1.35rem;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
   transition: all 0.2s;
   border: none;
   cursor: pointer;
   justify-self: end;
+}
+
+@media (max-width: 1100px) {
+  .homepage-lessons-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .homepage-sidebar {
+    width: 18rem;
+  }
+}
+
+@media (max-width: 820px) {
+  .homepage-container {
+    flex-direction: column;
+  }
+
+  .homepage-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 2px solid #cbd5e1;
+  }
+
+  .homepage-main-content {
+    padding: 1.25rem;
+  }
+
+  .homepage-lessons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .homepage-works-list {
+    max-height: 240px;
+  }
 }
 
 .homepage-lesson-card-button:hover {
