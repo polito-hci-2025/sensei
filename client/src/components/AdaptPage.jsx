@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, FileText } from 'lucide-react';
+import { Upload, X, FileText, ArrowLeft } from 'lucide-react';
 import '../styles/AdaptPage.css';
 
 function AdaptPage() {
@@ -107,7 +107,12 @@ function AdaptPage() {
       {/* Main Content Area */}
       <div className="adapt-main">
         <div className="adapt-upload-section">
-          <h2>Upload Your Material</h2>
+          <div className="adapt-header-section">
+            <button className="adapt-back-button" onClick={() => navigate('/')}>
+              <ArrowLeft size={20} />
+            </button>
+            <h2>Upload Your Material</h2>
+          </div>
           
           {error && (
             <div className="adapt-error-message">
