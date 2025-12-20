@@ -1,26 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
+import {ArrowLeft} from 'lucide-react';
+import ConfirmDialog from './ConfirmDialog.jsx';
 import '../styles/PreviewPage.css';
 import API from '../API/API.mjs';
 
 const PreviewPage = () => {
   const { type, id } = useParams(); 
-  console.log(type, id);
   const navigate = useNavigate();
   
   const [fileData, setFileData] = useState({
-    NamePDF: '',
-    Subject: '',
-    Grade: '',
-    Tag: '',
-    Description: '',
-    Shared: false
+    title: '',
+    subject: '',
+    grade: 0,
+    tag: '',
+    description: '',
+    shared: false
   });
 
   const [isShared, setIsShared] = useState(false);
-
+  const [isBackConfirmOpen, setIsBackConfirmOpen] = useState(false);
+  
   useEffect(() => {
-    // Qui caricherai i dati dal backend
     fetchFileData();
   }, [id, type]);
 
@@ -52,7 +53,10 @@ const PreviewPage = () => {
 
   const handleSave = async () => {
     try {
-        await API.updateInfo(id, fileData.NamePDF, fileData.Description, fileData.Subject, fileData.Grade, fileData.Shared);
+        const sharedValue = fileData.shared ? 1 : 0;
+        const description = fileData.description || ' '; // Invia uno spazio se vuota
+
+        await API.updateInfo(Number(id), fileData.title, description, fileData.subject, fileData.grade, sharedValue);
         alert('Modifiche salvate con successo!');
         navigate('/');
     } catch (error) {
@@ -80,12 +84,16 @@ const PreviewPage = () => {
     }
   };
 
+  const handleBack = () => {
+    setIsBackConfirmOpen(true);
+  };
+
   const renderContent = () => {
     if (type === 'created') {
       return (
         <div className="preview-content-area">
           <div className="preview-content-card">
-            <h3>{fileData.name}</h3>
+            <h3>{fileData.title}</h3>
             <div className="preview-placeholder-content">
               <p>1. ___ ___ ___</p>
               <div className="preview-checkbox-group">
@@ -109,7 +117,7 @@ const PreviewPage = () => {
       return (
         <div className="preview-content-area">
           <div className="preview-content-card">
-            <h3>{fileData.NamePDF.split(' - ')[0]}</h3>
+            <h3>{fileData.title.split(' - ')[0]}</h3>
             <div className="preview-placeholder-lines">
               <div className="preview-line"></div>
               <div className="preview-line"></div>
@@ -125,7 +133,7 @@ const PreviewPage = () => {
       return (
         <div className="preview-content-area">
           <div className="preview-content-card">
-            <h3>{fileData.NamePDF}</h3>
+            <h3>{fileData.title}</h3>
             <div className="preview-placeholder-lines">
               <div className="preview-line"></div>
               <div className="preview-line"></div>
@@ -147,32 +155,32 @@ const PreviewPage = () => {
           
           <div className="preview-info-group">
             <label>Document Name:</label>
-            <div className="preview-info-value">{fileData.NamePDF}</div>
+            <div className="preview-info-value">{fileData.title}</div>
           </div>
 
           <div className="preview-info-group">
             <label>Adapted for:</label>
-            <div className="preview-info-value">{fileData.Tag}</div>
+            <div className="preview-info-value">{fileData.tag}</div>
           </div>
 
           <div className="preview-info-row">
             <div className="preview-info-group preview-half">
               <label>Subject:</label>
-              <div className="preview-info-value">{fileData.Subject}</div>
+              <div className="preview-info-value">{fileData.subject}</div>
             </div>
             <div className="preview-info-group preview-half">
               <label>Class:</label>
-              <div className="preview-info-value">{fileData.Grade}</div>
+              <div className="preview-info-value">{fileData.grade}</div>
             </div>
           </div>
 
           <div className="preview-info-group">
             <label>Description:</label>
-            <div className="preview-info-value preview-description">{fileData.Description}</div>
+            <div className="preview-info-value preview-description">{fileData.description}</div>
           </div>
 
           <div className="preview-info-group">
-            <div className="preview-info-value preview-author">{fileData.Prof}</div>
+            <div className="preview-info-value preview-author">{fileData.prof}</div>
           </div>
 
           <div className="preview-action-buttons">
@@ -192,28 +200,14 @@ const PreviewPage = () => {
             <input
               type="text"
               className="preview-input"
-              value={fileData.NamePDF}
-              onChange={(e) => handleInputChange('NamePDF', e.target.value)}
+              value={fileData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
             />
           </div>
 
           <div className="preview-info-group">
             <label>Adapted for:</label>
-            <input
-              type="text"
-              className="preview-input"
-              value={fileData.Tag}
-              onChange={(e) => handleInputChange('Tag', e.target.value)}
-            />
-          </div>
-
-          <div className="preview-info-group">
-            <label>Description (optional):</label>
-            <textarea
-              className="preview-textarea"
-              value={fileData.Description}
-              onChange={(e) => handleInputChange('Description', e.target.value)}
-            />
+            <div className="preview-info-value">{fileData.tag}</div>
           </div>
 
             <div className="preview-info-row">
@@ -221,8 +215,8 @@ const PreviewPage = () => {
                     <label>Subject:</label>
                     <select
                     className="preview-select"
-                    value={fileData.Subject}
-                    onChange={(e) => handleInputChange('Subject', e.target.value)}
+                    value={fileData.subject}
+                    onChange={(e) => handleInputChange('subject', e.target.value)}
                     >
                     <option value="History">History</option>
                     <option value="Math">Math</option>
@@ -234,24 +228,33 @@ const PreviewPage = () => {
                     <label>Grade:</label>
                     <select
                     className="preview-select"
-                        value={fileData.Grade}
-                        onChange={(e) => handleInputChange('Grade', e.target.value)}
+                        value={fileData.grade}
+                        onChange={(e) => handleInputChange('grade', parseInt(e.target.value, 10))}
                     >
-                        <option value="1°">1°</option>
-                        <option value="2°">2°</option>
-                        <option value="3°">3°</option>
-                        <option value="4°">4°</option>
-                        <option value="5°">5°</option>
+                        <option value={1}>1°</option>
+                        <option value={2}>2°</option>
+                        <option value={3}>3°</option>
+                        <option value={4}>4°</option>
+                        <option value={5}>5°</option>
                     </select>
                 </div>
+            </div>
+
+            <div className="preview-info-group">
+                <label>Description (optional):</label>
+                    <textarea
+                    className="preview-textarea"
+                    value={fileData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    />
             </div>
 
           <div className="preview-checkbox-option">
             <input
               type="checkbox"
               id="shareCheckbox"
-              checked={fileData.Shared}
-              onChange={(e) => handleInputChange('Shared', e.target.checked)}
+              checked={fileData.shared}
+              onChange={(e) => handleInputChange('shared', e.target.checked)}
             />
             <label htmlFor="shareCheckbox">Share with community on save</label>
           </div>
@@ -273,26 +276,21 @@ const PreviewPage = () => {
       // created
       return (
         <div className="preview-info-panel">
-          <h2>Assignment Info</h2>
+          <h2>Document Info</h2>
           
           <div className="preview-info-group">
-            <label>Assignment Name:</label>
+            <label>Document Name:</label>
             <input
               type="text"
               className="preview-input"
-              value={fileData.NamePDF}
-              onChange={(e) => handleInputChange('NamePDF', e.target.value)}
+              value={fileData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
             />
           </div>
 
           <div className="preview-info-group">
-            <label>Adapted for:</label>
-            <input
-              type="text"
-              className="preview-input"
-              value={fileData.Tag}
-              onChange={(e) => handleInputChange('Tag', e.target.value)}
-            />
+            <label>Created for:</label>
+            <div className="preview-info-value">{fileData.tag}</div>
           </div>
 
           <div className="preview-info-row">
@@ -300,8 +298,8 @@ const PreviewPage = () => {
               <label>Subject:</label>
               <select
                 className="preview-select"
-                value={fileData.Subject}
-                onChange={(e) => handleInputChange('Subject', e.target.value)}
+                value={fileData.subject}
+                onChange={(e) => handleInputChange('subject', e.target.value)}
               >
                 <option value="History">History</option>
                 <option value="Math">Math</option>
@@ -313,14 +311,14 @@ const PreviewPage = () => {
               <label>Grade:</label>
               <select
                 className="preview-select"
-                value={fileData.Grade}
-                onChange={(e) => handleInputChange('Grade', e.target.value)}
+                value={fileData.grade}
+                onChange={(e) => handleInputChange('grade', parseInt(e.target.value, 10))}
               >
-                <option value="1°">1°</option>
-                <option value="2°">2°</option>
-                <option value="3°">3°</option>
-                <option value="4°">4°</option>
-                <option value="5°">5°</option>
+                <option value={1}>1°</option>
+                <option value={2}>2°</option>
+                <option value={3}>3°</option>
+                <option value={4}>4°</option>
+                <option value={5}>5°</option>
               </select>
             </div>
           </div>
@@ -329,8 +327,8 @@ const PreviewPage = () => {
             <label>Description (optional):</label>
             <textarea
               className="preview-textarea"
-              value={fileData.Description}
-              onChange={(e) => handleInputChange('Description', e.target.value)}
+              value={fileData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
             />
           </div>
 
@@ -338,8 +336,8 @@ const PreviewPage = () => {
             <input
               type="checkbox"
               id="shareCheckbox"
-              checked={fileData.Shared}
-              onChange={(e) => handleInputChange('Shared', e.target.checked)}
+              checked={fileData.shared}
+              onChange={(e) => handleInputChange('shared', e.target.checked)}
             />
             <label htmlFor="shareCheckbox">Share with community</label>
           </div>
@@ -361,16 +359,35 @@ const PreviewPage = () => {
   };
 
   return (
+    <div className="preview-main-wrapper">
+
     <div className="preview-container">
-      <header className="preview-header">
-        <div className="preview-header-left">
-        </div>
+        <ConfirmDialog
+            open={isBackConfirmOpen}
+            title="Leave page?"
+            message="Are you sure you want to go back?"
+            confirmText="Go back"
+            cancelText="Stay"
+            onCancel={() => setIsBackConfirmOpen(false)}
+            onConfirm={() => {
+                setIsBackConfirmOpen(false);
+                navigate(-1);
+            }}
+        />
+      <header className="preview-header-left">
+            <button
+                type="button"
+                className="cp-back-btn"
+                onClick={handleBack}
+                aria-label="Go back"
+            >
+            <ArrowLeft size={22} />
+          </button>
         <div className="preview-header-right">
         </div>
       </header>
 
 
-        <div className="preview-main-wrapper">
             <div className="preview-main">
                 {renderContent()}
                 {renderInfoPanel()}

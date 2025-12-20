@@ -118,6 +118,7 @@ const createPDF = async (pdf) => {
 //PUT /api/myworks/:id/edit
 const updateInfo = async (id_pdf, NamePDF, Description, Subject, Grade, Shared) => {
     const response = await fetch(SERVER_URL + '/api/myworks/' + id_pdf + '/edit', {
+        
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
@@ -129,7 +130,11 @@ const updateInfo = async (id_pdf, NamePDF, Description, Subject, Grade, Shared) 
         let message = "Errore durante la modifica delle informazioni";
         try{
             const error = await response.json();
-            message = error.error || error.message || message;
+             if (response.status === 422 && error.errors && Array.isArray(error.errors)) {
+                message = error.errors.map(err => `${err.msg} (${err.path})`).join(', ');
+            } else {
+                message = error.error || error.message || message;
+            }
         } catch(e){
              if (response.status === 409) {
                 message = "Non è possibile modificare le info";

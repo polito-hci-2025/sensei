@@ -294,12 +294,12 @@ function HomePage() {
             <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
             <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
           </svg>
-          <span>{lesson.Download}</span>
+          <span>{lesson.downloads}</span>
         </div>
       </div>
       
-      <h3>{lesson.NamePDF}</h3>
-      <p className="homepage-lesson-card-subtitle">{lesson.Description}</p>
+      <h3>{lesson.title}</h3>
+      <p className="homepage-lesson-card-subtitle">{lesson.subtitle}</p>
       
       <div className="homepage-lesson-card-tags">
         <span className={`homepage-lesson-card-tag subject-${getSubjectClass(lesson.subject)}`}>{lesson.subject}</span>
@@ -307,7 +307,7 @@ function HomePage() {
       </div>
       
       <div className="homepage-lesson-card-footer">
-        <span className="homepage-lesson-card-author">by {lesson.Prof}</span>
+        <span className="homepage-lesson-card-author">by {lesson.author}</span>
         <button 
           className="homepage-lesson-card-button"
           onClick={() => navigate(`/shared/preview/${lesson.id}`)}
@@ -321,7 +321,7 @@ function HomePage() {
   const MyWorkCard = ({ work }) => (
     <div
       className="homepage-work-card"
-      onClick={() => { navigate(`/${work.Type}/preview/${work.id_pdf}`); closeWorkMenu(); }}
+      onClick={() => { navigate(`/${work.status}/preview/${work.id}`); closeWorkMenu(); }}
         
     >
       <button
@@ -547,6 +547,7 @@ function HomePage() {
               <div className="homepage-empty">No shared works yet</div>
             )}
             {!isLoadingSharedWorks && !sharedWorksError && mostDownloaded.map((lesson) => (
+              console.log(lesson),
               <LessonCard key={lesson.id} lesson={lesson} />
             ))}
           </div>
