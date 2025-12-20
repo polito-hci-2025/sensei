@@ -411,6 +411,34 @@
   box-shadow: 0 4px 6px rgb(0 0 0 / 0.1);
 }
 
+/* Loading spinner animation */
+.adapt-spinner {
+  animation: adapt-spin 1s linear infinite;
+}
+
+@keyframes adapt-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Disabled state for buttons */
+.adapt-button:disabled,
+.adapt-back-button:disabled,
+.adapt-browse-button:disabled,
+.adapt-remove-file:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adapt-checkbox-label input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Scrollbar */
 .adapt-main::-webkit-scrollbar,
 .adapt-sidebar::-webkit-scrollbar {
