@@ -5,6 +5,14 @@ const db = new sqlite.Database('database.sqlite', (err) =>{
     if(err) throw err;
 });
 
+// Reduce SQLITE_BUSY errors under concurrent access (e.g., rapid share toggles)
+db.configure('busyTimeout', 5000);
+db.serialize(() => {
+    db.run('PRAGMA busy_timeout = 5000');
+    db.run('PRAGMA journal_mode = WAL');
+    db.run('PRAGMA synchronous = NORMAL');
+});
+
 //get a my work by id
 export const getMyWorkById = (id) => {
     return new Promise((resolve, reject) => {

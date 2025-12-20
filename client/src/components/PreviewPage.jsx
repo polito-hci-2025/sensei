@@ -1,0 +1,400 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router';
+import {ArrowLeft} from 'lucide-react';
+import ConfirmDialog from './ConfirmDialog.jsx';
+import '../styles/PreviewPage.css';
+import API from '../API/API.mjs';
+
+const PreviewPage = () => {
+  const { type, id } = useParams(); 
+  const navigate = useNavigate();
+  
+  const [fileData, setFileData] = useState({
+    title: '',
+    subject: '',
+    grade: 0,
+    tag: '',
+    description: '',
+    shared: false
+  });
+
+  const [isShared, setIsShared] = useState(false);
+  const [isBackConfirmOpen, setIsBackConfirmOpen] = useState(false);
+  
+  useEffect(() => {
+    fetchFileData();
+  }, [id, type]);
+
+  const fetchFileData = async () => {
+    try {
+
+        let data = null;
+        if(type=== 'shared'){
+            data = await API.getSharedWorkById(id);
+            setIsShared(type === 'shared');
+        }else {
+            data = await API.getMyWorkById(id);
+        }
+        setFileData(data);
+
+    } catch (error) {
+        console.error('Error fetching file data:', error);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    if (!isShared) {
+      setFileData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+        const sharedValue = fileData.shared ? 1 : 0;
+        const description = fileData.description || ' '; // Invia uno spazio se vuota
+
+        await API.updateInfo(Number(id), fileData.title, description, fileData.subject, fileData.grade, sharedValue);
+        alert('Modifiche salvate con successo!');
+        navigate('/');
+    } catch (error) {
+        console.error('Error saving data:', error);
+    }
+  };
+
+  const handleDownload = async () => {
+    try{
+        await API.download(id);
+        alert('Download completed!');
+    } catch (error) {
+        console.error('Error downloading file:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm('Sei sicuro di voler eliminare questo file?')) {
+      try {
+        await API.deleteMyWork(id);
+        navigate('/');
+      } catch (error) {
+        console.error('Error deleting file:', error);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    setIsBackConfirmOpen(true);
+  };
+
+  const renderContent = () => {
+    if (type === 'created') {
+      return (
+        <div className="preview-content-area">
+          <div className="preview-content-card">
+            <h3>{fileData.title}</h3>
+            <div className="preview-placeholder-content">
+              <p>1. ___ ___ ___</p>
+              <div className="preview-checkbox-group">
+                <label><input type="checkbox" disabled /> ___</label>
+                <label><input type="checkbox" disabled /> ___</label>
+              </div>
+              <div className="preview-checkbox-group">
+                <label><input type="checkbox" disabled /> ___</label>
+                <label><input type="checkbox" disabled /> ___</label>
+              </div>
+              <p>2. ___ ___ ___</p>
+              <div className="preview-checkbox-row">
+                <label><input type="checkbox" disabled /> T</label>
+                <label><input type="checkbox" disabled /> F</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    } else if (type === 'adapted') {
+      return (
+        <div className="preview-content-area">
+          <div className="preview-content-card">
+            <h3>{fileData.title.split(' - ')[0]}</h3>
+            <div className="preview-placeholder-lines">
+              <div className="preview-line"></div>
+              <div className="preview-line"></div>
+              <div className="preview-line"></div>
+              <div className="preview-line"></div>
+              <div className="preview-line"></div>
+            </div>
+          </div>
+        </div>
+      );
+    } else {
+      // shared
+      return (
+        <div className="preview-content-area">
+          <div className="preview-content-card">
+            <h3>{fileData.title}</h3>
+            <div className="preview-placeholder-lines">
+              <div className="preview-line"></div>
+              <div className="preview-line"></div>
+              <div className="preview-line"></div>
+              <div className="preview-line"></div>
+              <div className="preview-line"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  const renderInfoPanel = () => {
+    if (isShared) {
+      return (
+        <div className="preview-info-panel">
+          <h2>Document Info</h2>
+          
+          <div className="preview-info-group">
+            <label>Document Name:</label>
+            <div className="preview-info-value">{fileData.title}</div>
+          </div>
+
+          <div className="preview-info-group">
+            <label>Adapted for:</label>
+            <div className="preview-info-value">{fileData.tag}</div>
+          </div>
+
+          <div className="preview-info-row">
+            <div className="preview-info-group preview-half">
+              <label>Subject:</label>
+              <div className="preview-info-value">{fileData.subject}</div>
+            </div>
+            <div className="preview-info-group preview-half">
+              <label>Class:</label>
+              <div className="preview-info-value">{fileData.grade}</div>
+            </div>
+          </div>
+
+          <div className="preview-info-group">
+            <label>Description:</label>
+            <div className="preview-info-value preview-description">{fileData.description}</div>
+          </div>
+
+          <div className="preview-info-group">
+            <div className="preview-info-value preview-author">{fileData.prof}</div>
+          </div>
+
+          <div className="preview-action-buttons">
+            <button className="preview-button download" onClick={handleDownload}>
+              Download
+            </button>
+          </div>
+        </div>
+      );
+    } else if (type === 'adapted') {
+      return (
+        <div className="preview-info-panel">
+          <h2>Document Info</h2>
+          
+          <div className="preview-info-group">
+            <label>Document Name:</label>
+            <input
+              type="text"
+              className="preview-input"
+              value={fileData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+            />
+          </div>
+
+          <div className="preview-info-group">
+            <label>Adapted for:</label>
+            <div className="preview-info-value">{fileData.tag}</div>
+          </div>
+
+            <div className="preview-info-row">
+                <div className="preview-info-group preview-half">
+                    <label>Subject:</label>
+                    <select
+                    className="preview-select"
+                    value={fileData.subject}
+                    onChange={(e) => handleInputChange('subject', e.target.value)}
+                    >
+                    <option value="History">History</option>
+                    <option value="Math">Math</option>
+                    <option value="Science">Science</option>
+                    <option value="Literature">Literature</option>
+                    </select>
+                </div>
+                <div className="preview-info-group preview-half">
+                    <label>Grade:</label>
+                    <select
+                    className="preview-select"
+                        value={fileData.grade}
+                        onChange={(e) => handleInputChange('grade', parseInt(e.target.value, 10))}
+                    >
+                        <option value={1}>1°</option>
+                        <option value={2}>2°</option>
+                        <option value={3}>3°</option>
+                        <option value={4}>4°</option>
+                        <option value={5}>5°</option>
+                    </select>
+                </div>
+            </div>
+
+            <div className="preview-info-group">
+                <label>Description (optional):</label>
+                    <textarea
+                    className="preview-textarea"
+                    value={fileData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    />
+            </div>
+
+          <div className="preview-checkbox-option">
+            <input
+              type="checkbox"
+              id="shareCheckbox"
+              checked={fileData.shared}
+              onChange={(e) => handleInputChange('shared', e.target.checked)}
+            />
+            <label htmlFor="shareCheckbox">Share with community on save</label>
+          </div>
+
+          <div className="preview-action-buttons">
+            <button className="preview-button download" onClick={handleDownload}>
+              Download
+            </button>
+            <button className="preview-button save" onClick={handleSave}>
+              Save
+            </button>
+            <button className="preview-button delete" onClick={handleDelete}>
+              Delete
+            </button>
+          </div>
+        </div>
+      );
+    } else {
+      // created
+      return (
+        <div className="preview-info-panel">
+          <h2>Document Info</h2>
+          
+          <div className="preview-info-group">
+            <label>Document Name:</label>
+            <input
+              type="text"
+              className="preview-input"
+              value={fileData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+            />
+          </div>
+
+          <div className="preview-info-group">
+            <label>Created for:</label>
+            <div className="preview-info-value">{fileData.tag}</div>
+          </div>
+
+          <div className="preview-info-row">
+            <div className="preview-info-group preview-half">
+              <label>Subject:</label>
+              <select
+                className="preview-select"
+                value={fileData.subject}
+                onChange={(e) => handleInputChange('subject', e.target.value)}
+              >
+                <option value="History">History</option>
+                <option value="Math">Math</option>
+                <option value="Science">Science</option>
+                <option value="Literature">Literature</option>
+              </select>
+            </div>
+            <div className="preview-info-group preview-half">
+              <label>Grade:</label>
+              <select
+                className="preview-select"
+                value={fileData.grade}
+                onChange={(e) => handleInputChange('grade', parseInt(e.target.value, 10))}
+              >
+                <option value={1}>1°</option>
+                <option value={2}>2°</option>
+                <option value={3}>3°</option>
+                <option value={4}>4°</option>
+                <option value={5}>5°</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="preview-info-group">
+            <label>Description (optional):</label>
+            <textarea
+              className="preview-textarea"
+              value={fileData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+            />
+          </div>
+
+          <div className="preview-checkbox-option">
+            <input
+              type="checkbox"
+              id="shareCheckbox"
+              checked={fileData.shared}
+              onChange={(e) => handleInputChange('shared', e.target.checked)}
+            />
+            <label htmlFor="shareCheckbox">Share with community</label>
+          </div>
+
+          <div className="preview-action-buttons">
+            <button className="preview-button download" onClick={handleDownload}>
+              Download
+            </button>
+            <button className="preview-button save" onClick={handleSave}>
+              Save
+            </button>
+            <button className="preview-button delete" onClick={handleDelete}>
+              Delete
+            </button>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="preview-main-wrapper">
+
+    <div className="preview-container">
+        <ConfirmDialog
+            open={isBackConfirmOpen}
+            title="Leave page?"
+            message="Are you sure you want to go back?"
+            confirmText="Go back"
+            cancelText="Stay"
+            onCancel={() => setIsBackConfirmOpen(false)}
+            onConfirm={() => {
+                setIsBackConfirmOpen(false);
+                navigate(-1);
+            }}
+        />
+      <header className="preview-header-left">
+            <button
+                type="button"
+                className="cp-back-btn"
+                onClick={handleBack}
+                aria-label="Go back"
+            >
+            <ArrowLeft size={22} />
+          </button>
+        <div className="preview-header-right">
+        </div>
+      </header>
+
+
+            <div className="preview-main">
+                {renderContent()}
+                {renderInfoPanel()}
+            </div>
+        </div>
+    </div>
+  );
+};
+
+export default PreviewPage;
