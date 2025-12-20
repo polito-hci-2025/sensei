@@ -6,34 +6,6 @@ import AdaptPage from './components/AdaptPage';
 import CreatePage from './components/CreatePage';
 import PreviewPage from './components/PreviewPage';
 
-// Placeholder components per le altre pagine
-const CreatePage = () => (
-  <div className="flex items-center justify-center h-full p-8">
-    <div className="text-center">
-      <h2 className="text-4xl font-bold text-gray-800 mb-4">Create New Lesson</h2>
-      <p className="text-gray-600">Start creating your educational content</p>
-    </div>
-  </div>
-);
-
-const PreviewPage = () => (
-  <div className="flex items-center justify-center h-full p-8">
-    <div className="text-center">
-      <h2 className="text-4xl font-bold text-gray-800 mb-4">Preview</h2>
-      <p className="text-gray-600">Review your lesson before publishing</p>
-    </div>
-  </div>
-);
-
-
-/*const AdaptPage = () => (
-  <div className="flex items-center justify-center h-full p-8">
-    <div className="text-center">
-      <h2 className="text-4xl font-bold text-gray-800 mb-4">Adapt Existing Lesson</h2>
-      <p className="text-gray-600">Customize lessons for your students' needs</p>
-    </div>
-  </div>
-);*/
 
 const SharedPage = () => (
   <div className="flex items-center justify-center h-full p-8">
