@@ -81,7 +81,7 @@
 .cp-main-content {
   flex: 1;
   display: grid;
-  grid-template-columns: 300px 1fr 300px;
+  grid-template-columns: minmax(18rem, 24%) 1fr minmax(18rem, 24%);
   gap: 0;
   overflow: hidden;
   min-height: 0;
@@ -104,8 +104,8 @@
   align-items: center;
   justify-content: center;
   align-self: flex-start;
-  width: 44px;
-  height: 44px;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   background: white;
   border: 1px solid #e2e8f0;
@@ -122,7 +122,7 @@
   background-color: #f9fafb;
   border-color: #7c3aed;
   color: #7c3aed;
-  transform: translateX(-2px);
+  transform: translateX(-0.125rem);
 }
 
 .cp-dsa-section {
@@ -131,7 +131,7 @@
   gap: 0.75rem;
   padding: 1rem;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: #f9fafb;
 }
 
@@ -184,7 +184,7 @@
   gap: 0.75rem;
   padding: 1rem;
   border: 1px dashed #d1d5db;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: #f9fafb;
   flex: 1;
   min-height: 0;
@@ -218,7 +218,7 @@
   padding: 0.75rem 1rem;
   background: rgba(79, 70, 229, 0.1);
   border: 1px solid rgba(79, 70, 229, 0.3);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: #111827;
   font-size: 0.875rem;
   font-weight: 500;
@@ -229,7 +229,7 @@
 .cp-sidebar-btn:hover {
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
   border-color: transparent;
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
@@ -244,7 +244,7 @@
   padding: 0.75rem;
   background: rgba(79, 70, 229, 0.1);
   border: 1px solid rgba(79, 70, 229, 0.2);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: #111827;
   font-size: 0.875rem;
   cursor: pointer;
@@ -255,7 +255,7 @@
 .cp-saved-question:hover {
   background: rgba(79, 70, 229, 0.2);
   border-color: #4f46e5;
-  transform: translateX(4px);
+  transform: translateX(0.25rem);
 }
 
 .cp-btn-primary:disabled {
@@ -268,7 +268,7 @@
   padding: 0.5rem;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   color: #ef4444;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -338,12 +338,12 @@
   align-items: center;
   gap: 0.75rem;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 200px;
+  min-width: 12.5rem;
 }
 
 .cp-btn-question {
@@ -355,7 +355,7 @@
 .cp-btn-question:hover {
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
   border-color: transparent;
-  transform: translateY(-4px);
+  transform: translateY(-0.25rem);
   box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
 }
 
@@ -368,7 +368,7 @@
 .cp-btn-paragraph:hover {
   background: linear-gradient(135deg, #7c3aed, #a855f7);
   border-color: transparent;
-  transform: translateY(-4px);
+  transform: translateY(-0.25rem);
   box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
 }
 
@@ -378,9 +378,9 @@
   gap: 1rem;
   height: 100%;
   background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(0.375rem);
   border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  border-radius: 1rem;
   padding: 1.5rem;
 }
 
@@ -413,14 +413,14 @@
 }
 
 .cp-format-btn {
-  width: 42px;
-  height: 42px;
+  width: 2.625rem;
+  height: 2.625rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   color: #111827;
   font-size: 0.95rem;
   font-weight: 800;
@@ -434,11 +434,11 @@
 }
 
 .cp-paragraph-editor {
-  min-height: 400px;
+  min-height: 25rem;
   padding: 1rem;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   color: #111827;
   font-size: 1rem;
   line-height: 1.5;
@@ -453,27 +453,27 @@
 /* Quill paragraph editor (used in center area) */
 .cp-quill {
   /* Keep the editor compact so the footer stays visible */
-  min-height: 260px;
+  min-height: 16.25rem;
   display: flex;
   flex-direction: column;
 }
 
 .cp-quill .ql-toolbar.ql-snow {
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: white;
 }
 
 .cp-quill .ql-container.ql-snow {
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: white;
   flex: 1;
-  min-height: 200px;
+  min-height: 12.5rem;
 }
 
 .cp-quill .ql-editor {
-  min-height: 180px;
+  min-height: 11.25rem;
   color: #111827;
   font-size: 1rem;
   line-height: 1.5;
@@ -503,7 +503,7 @@
   padding: 0.75rem 1rem;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   color: #111827;
   font-size: 0.95rem;
   white-space: nowrap;
@@ -524,11 +524,11 @@
 
 .cp-content-textarea {
   flex: 1;
-  min-height: 400px;
+  min-height: 25rem;
   padding: 1rem;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   color: #111827;
   font-size: 1rem;
   font-family: inherit;
@@ -537,18 +537,18 @@
 }
 
 .cp-content-textarea--small {
-  min-height: 180px;
+  min-height: 11.25rem;
 }
 
 .cp-content-textarea--large {
-  min-height: 320px;
+  min-height: 20rem;
 }
 
 .cp-answers {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-height: 220px;
+  max-height: 13.75rem;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
@@ -564,20 +564,20 @@
   padding: 0.75rem 1rem;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   color: #111827;
   font-size: 0.95rem;
 }
 
 .cp-answer-delete {
-  width: 42px;
-  height: 42px;
+  width: 2.625rem;
+  height: 2.625rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   color: #ef4444;
   cursor: pointer;
   transition: all 0.2s;
@@ -622,7 +622,7 @@
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: white;
   font-size: 0.875rem;
   font-weight: 600;
@@ -631,7 +631,7 @@
 }
 
 .cp-btn-primary:hover {
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
 }
 
@@ -639,7 +639,7 @@
   padding: 0.75rem 1.5rem;
   background: #f5f5f5;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: #111827;
   font-size: 0.875rem;
   font-weight: 600;
@@ -693,7 +693,7 @@
   padding: 0.75rem;
   background: rgba(79, 70, 229, 0.1);
   border: 1px solid rgba(79, 70, 229, 0.2);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: #111827;
   font-size: 0.875rem;
   cursor: default;
@@ -706,7 +706,7 @@
   justify-content: center;
   padding: 2rem;
   border: 2px dashed rgba(79, 70, 229, 0.2);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   margin-top: 1rem;
 }
 
@@ -744,7 +744,7 @@
   padding: 0.5rem 1rem;
   background: rgba(79, 70, 229, 0.1);
   border: 1px solid rgba(79, 70, 229, 0.3);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: #111827;
   font-size: 0.875rem;
   cursor: pointer;
@@ -760,7 +760,7 @@
   padding: 0.5rem 1rem;
   background: rgba(124, 58, 237, 0.1);
   border: 1px solid rgba(124, 58, 237, 0.3);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: #111827;
   font-size: 0.875rem;
   cursor: pointer;
