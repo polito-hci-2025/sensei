@@ -107,19 +107,22 @@
   width: 44px;
   height: 44px;
   padding: 0;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  border: none;
-  border-radius: 9999px;
-  color: white;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  color: #374151;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
 }
 
 .cp-back-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.25);
+  background-color: #f9fafb;
+  border-color: #7c3aed;
+  color: #7c3aed;
+  transform: translateX(-2px);
 }
 
 .cp-dsa-section {

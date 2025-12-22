@@ -5,6 +5,7 @@ import HomePage from './components/HomePage';
 import AdaptPage from './components/AdaptPage';
 import CreatePage from './components/CreatePage';
 import PreviewPage from './components/PreviewPage';
+import { UnsavedChangesProvider } from './contexts/UnsavedChangesContext.jsx';
 
 
 const SharedPage = () => (
@@ -36,25 +37,28 @@ const NotFound = () => (
 
 function App() {
   return (
-    <Routes>
-      <Route element={<DefaultLayout />}>
-        <Route path="/" element={<HomePage />} />
-        
-        <Route path="/create" element={<CreatePage />} />
-        <Route path="/create/preview" element={<PreviewPage type="created" />} />
+    <UnsavedChangesProvider>
+      <Routes>
+        <Route element={<DefaultLayout />}>
+          <Route path="/" element={<HomePage />} />
+          
+          <Route path="/create" element={<CreatePage />} />
+          <Route path="/create/preview" element={<PreviewPage type="created" />} />
 
-        <Route path="/:type/preview/:id" element={<PreviewPage />} />
+          <Route path="/shared/preview/:id" element={<PreviewPage type="shared" />} />
 
-        <Route path="/adapt" element={<AdaptPage />} />
-        <Route path="/adapt/preview" element={<PreviewPage type="adapted" />} />
+          <Route path="/:type/preview/:id" element={<PreviewPage />} />
 
-        <Route path="/shared" element={<SharedPage />} />
-        
-        <Route path="/edit/:id" element={<EditPage />} />
-                
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+          <Route path="/adapt" element={<AdaptPage />} />
+          
+          <Route path="/shared" element={<SharedPage />} />
+          
+          <Route path="/edit/:id" element={<EditPage />} />
+                  
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </UnsavedChangesProvider>
   );
 }
 

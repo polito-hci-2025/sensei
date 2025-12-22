@@ -2,29 +2,39 @@ import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import ConfirmDialog from './ConfirmDialog';
 import '../styles/DefaultLayout.css';
+import { useUnsavedChanges } from '../contexts/UnsavedChangesContext.jsx';
 
 function DefaultLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isHomeConfirmOpen, setIsHomeConfirmOpen] = useState(false);
+  const { isDirty, clearDirty } = useUnsavedChanges();
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
 
   const handleSenseiClick = (e) => {
     if (location.pathname === '/') return;
     e.preventDefault();
-    setIsHomeConfirmOpen(true);
+    if (!isDirty) {
+      clearDirty();
+      navigate('/');
+      return;
+    }
+    setIsLeaveConfirmOpen(true);
   };
 
   return (
     <div className="layout-container">
       <ConfirmDialog
-        open={isHomeConfirmOpen}
+        open={isLeaveConfirmOpen}
         title="Leave page?"
-        message="Are you sure you want to go to the home page?"
-        confirmText="Go home"
+        message="You have unsaved changes. Are you sure you want to leave this page?"
+        confirmText="Leave"
         cancelText="Stay"
-        onCancel={() => setIsHomeConfirmOpen(false)}
+        onCancel={() => {
+          setIsLeaveConfirmOpen(false);
+        }}
         onConfirm={() => {
-          setIsHomeConfirmOpen(false);
+          setIsLeaveConfirmOpen(false);
+          clearDirty();
           navigate('/');
         }}
       />
@@ -32,9 +42,7 @@ function DefaultLayout() {
       <header className="layout-header">
         <div className="layout-header-content">
           <Link to="/" className="layout-logo-link" onClick={handleSenseiClick}>
-            <h1 className="layout-logo-title">
-              Sensei
-            </h1>
+            <h1 className="layout-logo-title">Sensei</h1>
           </Link>
           <div className="layout-user-section">
             <span className="layout-welcome-text">Welcome back,</span>
@@ -53,9 +61,8 @@ function DefaultLayout() {
         <div className="layout-footer-content">
           <p className="layout-footer-text">
             Made by <span className="layout-footer-author">CTRL-U</span>
-          </p>
-          <p className="layout-footer-copyright">
-            © {new Date().getFullYear()} Sensei. All rights reserved.
+            <span className="layout-footer-sep">•</span>
+            <span className="layout-footer-muted">© {new Date().getFullYear()} Sensei</span>
           </p>
         </div>
       </footer>

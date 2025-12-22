@@ -24,8 +24,27 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit'; 
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';               
-const require = createRequire(import.meta.url);        
-const pdfParse = require('pdf-parse');                 
+const require = createRequire(import.meta.url);
+
+// pdf-parse v2+ exports a PDFParse class (not a callable function)
+const pdfParseModule = require('pdf-parse');
+const parsePdfText = async (buffer) => {
+  const data = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+
+  // Backward compatibility (older versions exported a function)
+  if (typeof pdfParseModule === 'function') {
+    return await pdfParseModule(data);
+  }
+
+  const PDFParse = pdfParseModule?.PDFParse;
+  if (typeof PDFParse !== 'function') {
+    throw new Error('pdf-parse: unsupported export shape (missing PDFParse)');
+  }
+
+  const parser = new PDFParse({ data });
+  await parser.load();
+  return await parser.getText();
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -442,8 +461,8 @@ app.post('/api/adapt/generate', upload.single('file'), async (req, res) => {
       try { const v = JSON.parse(colorsRaw ?? '{}'); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
     })();
 
-    // Estrai testo dal PDF caricato (usa pdf-parse via require)
-    const parsed = await pdfParse(req.file.buffer);
+    // Estrai testo dal PDF caricato
+    const parsed = await parsePdfText(req.file.buffer);
     const originalText = (parsed?.text ?? '').trim() || 'Nessun testo estratto dal PDF.';
 
     // Preferenze (tema e accorciamento)

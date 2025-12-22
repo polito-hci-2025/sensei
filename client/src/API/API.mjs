@@ -363,6 +363,31 @@ const deleteContentPDF = async (id_pdf, id_content) => {
     return null;
 }
 
+// POST /api/adapt/generate
+// Expects multipart/form-data with a PDF file in `file` field.
+// Returns a Blob (application/pdf)
+const generateAdaptedPdf = async (formData) => {
+    const response = await fetch(SERVER_URL + '/api/adapt/generate', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+    });
+
+    if (!response.ok) {
+        let message = 'Failed to generate adapted PDF';
+        try {
+            const err = await response.json();
+            const base = err?.error || err?.message || message;
+            message = err?.details ? `${base}: ${err.details}` : base;
+        } catch (e) {
+            // ignore (non-JSON error)
+        }
+        throw new Error(message);
+    }
+
+    return await response.blob();
+};
+
 const API = {
     getMyWorkById,
     getAllMyWorks,
@@ -377,6 +402,7 @@ const API = {
     createContentPDF,
     updateContentPDF,
     deleteAllContentPDF,
-    deleteContentPDF
+    deleteContentPDF,
+    generateAdaptedPdf
 };
 export default API;
