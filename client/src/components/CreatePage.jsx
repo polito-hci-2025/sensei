@@ -252,6 +252,18 @@ function CreatePage() {
     setIsBackConfirmOpen(true);
   };
 
+  const handlePreviewAssignment = () => {
+    navigate('/create/preview', {
+      state: {
+        work: {
+          dsaTypes: selectedDsaTypes,
+          questions,
+          paragraphs,
+        },
+      },
+    });
+  };
+
   const handleSelectType = (type) => {
     setSelectedType(type);
     setDraftText('');
@@ -581,7 +593,7 @@ function CreatePage() {
             <button className="cp-btn-primary" onClick={() => handleSelectType('paragraph')}>
               <Plus size={18} /> Add Paragraph
             </button>
-            <button className="cp-btn-secondary">
+            <button className="cp-btn-secondary" onClick={handlePreviewAssignment}>
               <Save size={18} /> Save Assignment
             </button>
           </div>
@@ -748,18 +760,6 @@ function CreatePage() {
               </>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Bottom Bar */}
-      <div className="cp-bottom-bar">
-        <div className="cp-bottom-bar-left">
-          <button className="cp-btn-change-font">Change Font</button>
-        </div>
-        <div className="cp-bottom-bar-right">
-          <button className="cp-btn-suggestions">
-            Try to shorten the question
-          </button>
         </div>
       </div>
     </div>
