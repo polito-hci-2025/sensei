@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {ArrowLeft} from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import '../styles/PreviewPage.css';
 import API from '../API/API.mjs';
 
-const PreviewPage = () => {
-  const { type, id } = useParams(); 
+const PreviewPage = ({ type: typeProp } = {}) => {
+  const { type: typeParam, id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const type = typeProp ?? typeParam;
+
+  const draftWork = location.state?.work ?? null;
+  const isDraftCreatedPreview = type === 'created' && (id === undefined || id === null) && !!draftWork;
   
   const [fileData, setFileData] = useState({
     title: '',
@@ -22,8 +27,18 @@ const PreviewPage = () => {
   const [isBackConfirmOpen, setIsBackConfirmOpen] = useState(false);
   
   useEffect(() => {
+    if (isDraftCreatedPreview) {
+      setIsShared(false);
+      setFileData((prev) => ({
+        ...prev,
+        tag: Array.isArray(draftWork?.dsaTypes) ? draftWork.dsaTypes.join(', ') : '',
+      }));
+      return;
+    }
+
+    if (!id) return;
     fetchFileData();
-  }, [id, type]);
+  }, [id, type, isDraftCreatedPreview]);
 
   const fetchFileData = async () => {
     try {
@@ -89,6 +104,57 @@ const PreviewPage = () => {
   };
 
   const renderContent = () => {
+    if (isDraftCreatedPreview) {
+      const paragraphs = Array.isArray(draftWork?.paragraphs) ? draftWork.paragraphs : [];
+      const questions = Array.isArray(draftWork?.questions) ? draftWork.questions : [];
+
+      return (
+        <div className="preview-content-area">
+          <div className="preview-content-card">
+            <h3>{fileData.title || 'Untitled assignment'}</h3>
+            <div className="preview-placeholder-content">
+              {paragraphs.length > 0 && (
+                <>
+                  {paragraphs.map((p, idx) => (
+                    <div key={p.id ?? `p-${idx}`} style={{ marginBottom: '1rem' }}>
+                      <div dangerouslySetInnerHTML={{ __html: p.html || '' }} />
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {questions.map((q, idx) => (
+                <div key={q.id ?? `q-${idx}`} style={{ marginBottom: '1rem' }}>
+                  <p>{idx + 1}. {q.content}</p>
+
+                  {q.questionType === 'multiple_choice' && Array.isArray(q.answers) && q.answers.length > 0 && (
+                    <div className="preview-checkbox-group">
+                      {q.answers.map((a, aIdx) => (
+                        <label key={`${q.id ?? idx}-a-${aIdx}`}>
+                          <input type="checkbox" disabled /> {a}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  {q.questionType === 'true_false' && (
+                    <div className="preview-checkbox-row">
+                      <label><input type="checkbox" disabled /> T</label>
+                      <label><input type="checkbox" disabled /> F</label>
+                    </div>
+                  )}
+
+                  {q.questionType === 'short_answer' && (
+                    <p>___ ___ ___</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (type === 'created') {
       return (
         <div className="preview-content-area">
@@ -148,6 +214,29 @@ const PreviewPage = () => {
   };
 
   const renderInfoPanel = () => {
+    if (isDraftCreatedPreview) {
+      return (
+        <div className="preview-info-panel">
+          <h2>Document Info</h2>
+
+          <div className="preview-info-group">
+            <label>Document Name:</label>
+            <input
+              type="text"
+              className="preview-input"
+              value={fileData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+            />
+          </div>
+
+          <div className="preview-info-group">
+            <label>Created for:</label>
+            <div className="preview-info-value">{fileData.tag || '—'}</div>
+          </div>
+        </div>
+      );
+    }
+
     if (isShared) {
       return (
         <div className="preview-info-panel">
