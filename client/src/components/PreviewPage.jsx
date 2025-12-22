@@ -25,6 +25,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
 
   const [isShared, setIsShared] = useState(false);
   const [isBackConfirmOpen, setIsBackConfirmOpen] = useState(false);
+  const [adaptedPdfUrl, setAdaptedPdfUrl] = useState(null);
   
   useEffect(() => {
     if (isDraftCreatedPreview) {
@@ -37,6 +38,28 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       }));
       return;
     }
+
+//per adapt 
+    if (type === 'adapted' && id === 'new') {
+      const url = sessionStorage.getItem('adaptedPdfUrl') || null;
+      const metaRaw = sessionStorage.getItem('adaptedPdfData') || '{}';
+      let meta = {};
+      try { meta = JSON.parse(metaRaw); } catch {}
+
+      setAdaptedPdfUrl(url);
+      setIsShared(false);
+
+      setFileData(prev => ({
+        ...prev,
+        title: `${(meta.originalFileName || 'Adapted material').replace(/\.pdf$/i, '')} - adapted`,
+        subject: meta.subject || '',
+        grade: meta.grade || 0,
+        tag: Array.isArray(meta.dsa) ? meta.dsa.join(', ') : '',
+        description: prev.description || ''
+      }));
+      return;
+    }
+
     if (!id) return;
     fetchFileData();
   }, [id, type, isDraftCreatedPreview]);
@@ -193,10 +216,30 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         </div>
       );
     } else if (type === 'adapted') {
+      if (id === 'new' && adaptedPdfUrl) {
+        return (
+          <div className="preview-content-area">
+            <div className="preview-content-card">
+              <h3>{fileData.title}</h3>
+              <div className="preview-placeholder-content">
+                <object
+                  data={`${adaptedPdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                  type="application/pdf"
+                  className="adapt-pdf-preview"
+                >
+                  <p>Your browser doesn't support PDF preview.</p>
+                </object>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Fallback for DB-backed adapted items
       return (
         <div className="preview-content-area">
           <div className="preview-content-card">
-            <h3>{fileData.title.split(' - ')[0]}</h3>
+            <h3>{(fileData.title || '').split(' - ')[0]}</h3>
             <div className="preview-placeholder-lines">
               <div className="preview-line"></div>
               <div className="preview-line"></div>

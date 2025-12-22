@@ -17,7 +17,18 @@ import {
 } from './dao.mjs';
 import cors from 'cors';
 import { check, validationResult } from 'express-validator';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit'; 
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';               
+const require = createRequire(import.meta.url);        
+const pdfParse = require('pdf-parse');                 
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // init express
 const app = new express();
@@ -43,7 +54,92 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+const upload = multer({ storage: multer.memoryStorage() });
 
+// Basic word list to bold. You can pass a custom list from the client.
+const DEFAULT_BOLD_WORDS = ['importante', 'definizione', 'esercizio', 'attenzione', 'nota'];
+
+// === Aggiunte: util per accorciare il testo ===
+const STOPWORDS = new Set([
+  // IT
+  'di','a','da','in','con','su','per','tra','fra','il','lo','la','i','gli','le','un','uno','una','e','o','che','del','della','dei','delle','degli','dell','al','alla','agli','alle','ai',
+  // EN
+  'the','a','an','and','or','of','to','in','on','for','with','by','from','is','are','was','were','be','as','at','it','this','that'
+]);
+
+const splitSentences = (t) =>
+  (t || '')
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[\.\!\?])\s+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+const tokenize = (s) => s.toLowerCase().match(/[a-zà-ù’']+|\d+/gi) || [];
+
+const scoreSentences = (sentences, keywords = []) => {
+  const kw = new Set((keywords || []).map(k => String(k).toLowerCase()));
+  const freq = new Map();
+  for (const s of sentences) {
+    for (const w of tokenize(s)) {
+      if (STOPWORDS.has(w)) continue;
+      freq.set(w, (freq.get(w) || 0) + 1);
+    }
+  }
+  return sentences.map((s, idx) => {
+    let score = 0;
+    for (const w of tokenize(s)) {
+      if (STOPWORDS.has(w)) continue;
+      score += (freq.get(w) || 0);
+      if (kw.has(w)) score += 3; // boost parole chiave
+    }
+    return { idx, s, score };
+  });
+};
+
+const shortenText = (text, ratio = 0.5, keywords = []) => {
+  const sents = splitSentences(text);
+  if (sents.length <= 2) return text;
+  const target = Math.max(2, Math.round(sents.length * Math.max(0.1, Math.min(1, ratio))));
+  const top = scoreSentences(sents, keywords)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, target)
+    .sort((a, b) => a.idx - b.idx);
+  return top.map(x => x.s).join(' ');
+};
+// === fine aggiunte ===
+
+// Sanifica testo quando il font non ha i glyph richiesti
+const sanitizeText = (t) =>
+  t
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x00-\x7F]/g, '?');
+
+const safeWidthOf = (font, t, fontSize) => {
+  try { return font.widthOfTextAtSize(t, fontSize); }
+  catch { return font.widthOfTextAtSize(sanitizeText(t), fontSize); }
+};
+
+// wrapText aggiornato per usare safeWidthOf
+const wrapText = (font, text, fontSize, maxWidth) => {
+  const words = text.split(/\s+/);
+  const lines = [];
+  let currentLine = '';
+
+  const widthOf = (t) => safeWidthOf(font, t, fontSize);
+
+  for (const w of words) {
+    const testLine = currentLine ? `${currentLine} ${w}` : w;
+    if (widthOf(testLine) <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = w;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+};
 
 //GET /api/myworks/:id
 app.get('/api/myworks/:id', async (req, res)=>{
@@ -316,6 +412,292 @@ app.delete('/api/createpdf/:id_pdf/content/:id_content/delete', async (req, res)
 });
 
 
+// POST /api/adapt/generate
+const dbg = (...args) => console.log('[adapt]', ...args);
+
+//POST /api/adapt/generate
+app.post('/api/adapt/generate', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Missing file' });
+    }
+    if (!/pdf$/i.test(req.file.mimetype) && !/\.pdf$/i.test(req.file.originalname)) {
+      return res.status(400).json({ error: 'Only PDF files are accepted' });
+    }
+
+    const dsaRaw = req.body?.dsa;
+    const subject = req.body?.subject ?? '';
+    const grade = req.body?.grade ?? '';
+    const boldWordsRaw = req.body?.boldWords;
+    const colorsRaw = req.body?.keywordColors;                         // { parola: "#RRGGBB" }
+    const dsa = Array.isArray(dsaRaw) ? dsaRaw : (() => {
+      try { const v = JSON.parse(dsaRaw ?? '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
+    })();
+
+    const boldWords = (() => {
+      if (Array.isArray(boldWordsRaw)) return boldWordsRaw;
+      try { const v = JSON.parse(boldWordsRaw ?? '[]'); return Array.isArray(v) ? v : DEFAULT_BOLD_WORDS; } catch { return DEFAULT_BOLD_WORDS; }
+    })();
+    const keywordColors = (() => {
+      try { const v = JSON.parse(colorsRaw ?? '{}'); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
+    })();
+
+    // Estrai testo dal PDF caricato (usa pdf-parse via require)
+    const parsed = await pdfParse(req.file.buffer);
+    const originalText = (parsed?.text ?? '').trim() || 'Nessun testo estratto dal PDF.';
+
+    // Preferenze (tema e accorciamento)
+    const themePref = String(req.query?.theme || 'default').toLowerCase();
+    const shortenPct = Number(req.body?.shorten || 0);
+
+    // Accorcia testo
+    const textForLayout = shortenPct > 0
+      ? shortenText(originalText, Math.max(0.1, Math.min(1, shortenPct/100)), boldWords)
+      : originalText;
+
+    // Inizializza tema colore (PRIMA di usarlo)
+    const theme = pickTheme(themePref);
+    const colorText = hexToRgb(theme.text);
+    const colorAccent = hexToRgb(theme.accent);
+    const colorAccentLight = hexToRgb(theme.lightAccent);
+    const colorNoteBg = hexToRgb(theme.noteBg);
+    const colorWarnBg = hexToRgb(theme.warnBg);
+
+    // Font dir
+    const fontsDir = path.resolve(__dirname, 'fonts');
+    dbg('fontsDir:', fontsDir);
+    dbg('fontsInDir:', fs.existsSync(fontsDir) ? fs.readdirSync(fontsDir) : 'missing');
+
+    const tryEmbedFont = async (pdfDoc, candidates) => {
+      for (const fname of candidates) {
+        const p = path.join(fontsDir, fname);
+        dbg('test font:', fname, 'exists:', fs.existsSync(p));
+        if (!fs.existsSync(p)) continue;
+        try {
+          const bytes = fs.readFileSync(p);
+          const font = await pdfDoc.embedFont(bytes);
+          dbg('embedded:', fname);
+          return { font, name: fname };
+        } catch (e) {
+          dbg('embed failed:', fname, e.message);
+        }
+      }
+      return null;
+    };
+
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+
+    // SOLO Comic Sans → fallback Helvetica
+    const reg = await tryEmbedFont(pdfDoc, ['ComicSansMS.ttf']);
+    const bold = await tryEmbedFont(pdfDoc, ['ComicSansMSBold.ttf']);
+
+    const regularFont = reg?.font || await pdfDoc.embedStandardFont(StandardFonts.Helvetica);
+    const boldFont = bold?.font || await pdfDoc.embedStandardFont(StandardFonts.HelveticaBold);
+    console.log('Adapt fonts:', { regular: reg?.name || 'Helvetica', bold: bold?.name || 'Helvetica-Bold' });
+
+    {
+      const fontSize = 15;
+      const margin = 64;
+      const lineGap = 9;
+      const paraGap = 12;
+      const pageWidth = 595, pageHeight = 842;
+      const maxWidth = Math.min(pageWidth - margin * 2, 430);
+      const spaceExtra = 0;
+
+      const paragraphs = textForLayout.split(/\n{2,}|\r{2,}/).map(p => p.trim()).filter(Boolean);
+      const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / (fontSize + lineGap));
+
+      let currentPage = null, y = 0, linesOnPage = 0;
+
+
+
+      const ensurePage = () => {
+        if (!currentPage) {
+          currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+
+            currentPage.drawRectangle({ x: 0, y: pageHeight - 28, width: pageWidth, height: 28, color: colorAccentLight, opacity: 0.4 });
+            currentPage.drawText('Materiale Adattato', { x: margin, y: pageHeight - 22, size: 11, font: boldFont, color: colorAccent });
+            currentPage.drawRectangle({ x: margin - 16, y: 48, width: 4, height: pageHeight - 96, color: colorAccent, opacity: 0.25 });
+
+          y = pageHeight - margin;
+          linesOnPage = 0;
+        }
+      };
+
+      // titoli: brevi, con due punti o in Maiuscoletto
+      const isHeading = (t) => {
+        const s = t.split(/\n/)[0].trim();
+        const fewWords = s.split(/\s+/).length <= 8;
+        const short = s.length <= 60;
+        const looksTitle = /[:：]$/.test(s) || /^[A-ZÀ-Ù0-9][^.!?]{0,60}$/.test(s);
+        return short && fewWords && looksTitle;
+      };
+
+      const drawHeading = (text) => {
+        const title = text.replace(/[:：]\s*$/, '');
+        const size = fontSize + 3;
+        const w = safeWidthOf(boldFont, title, size);
+        if (y - (size + 6) < 48) { currentPage = null; ensurePage(); }
+        currentPage.drawText(title, { x: margin, y, size, font: boldFont, color: colorAccent });
+        currentPage.drawLine({
+          start: { x: margin, y: y - 3 },
+          end: { x: Math.min(margin + w, margin + maxWidth), y: y - 3 },
+          thickness: 1.2,
+          color: colorAccent
+        });
+        y -= size + Math.max(6, lineGap - 2);
+        linesOnPage += 1;
+      };
+
+      for (const originalP of paragraphs) {
+        ensurePage();
+        let p = originalP;
+
+        const lowerP = p.toLowerCase();
+        let blockBg = null;
+        if (lowerP.startsWith('attenzione') || lowerP.startsWith('nota')) blockBg = colorWarnBg;
+        if (lowerP.startsWith('definizione') || lowerP.startsWith('esempio')) blockBg = colorNoteBg;
+
+        if (isHeading(p)) {
+          drawHeading(p.split(/\n/)[0]);
+          const rest = p.replace(/^[^\n]+/, '').trim();
+          if (!rest) { y -= paraGap / 2; continue; }
+          p = rest;
+        }
+
+        const lines = wrapText(regularFont, p, fontSize, maxWidth);
+
+        if (blockBg) {
+          const blockHeight = lines.length * (fontSize + lineGap) - lineGap + 24; // padding
+          if (y - blockHeight < 48) { currentPage = null; ensurePage(); }
+          const rectY = y - blockHeight + 12;
+          currentPage.drawRectangle({
+            x: margin - 10, y: rectY, width: maxWidth + 20, height: blockHeight,
+            color: blockBg, opacity: 0.35
+          });
+          currentPage.drawRectangle({
+            x: margin - 10, y: rectY, width: 3, height: blockHeight, color: colorAccent, opacity: 0.75
+          });
+        }
+
+        for (const line of lines) {
+          ensurePage();
+          if (linesOnPage >= maxLinesPerPage || y - (fontSize + lineGap) < 48) {
+            currentPage = null; ensurePage();
+          }
+
+          const containsKw = boldWords.some(w => w && line.toLowerCase().includes(w.toLowerCase()));
+          if (containsKw) {
+            currentPage.drawRectangle({
+              x: margin - 2, y: y - fontSize * 0.25,
+              width: maxWidth + 4, height: fontSize * 1.2,
+              color: colorAccentLight, opacity: 0.35
+            });
+          }
+
+          const bullet = line.match(/^(\s*[-*•]\s+)(.*)$/);
+          let x = margin;
+          let content = line;
+
+          if (bullet) {
+            currentPage.drawCircle({ x: margin - 6, y: y + fontSize * 0.35, size: 1.5, color: colorAccent });
+            content = bullet[2];
+          }
+
+          const tokens = content.split(/(\s+)/);
+          for (const t of tokens) {
+            const raw = t;
+            const isSpace = /^\s+$/.test(raw);
+            const norm = raw.toLowerCase().replace(/[.,;:!?()"']/g, '');
+            const isBold = boldWords.includes(norm);
+
+            const font = isBold ? boldFont : regularFont;
+            const color = isBold ? colorAccent : colorText;
+
+            let drawText = raw;
+            try {
+              currentPage.drawText(drawText, { x, y, size: fontSize, font, color });
+            } catch {
+              drawText = sanitizeText(raw);
+              currentPage.drawText(drawText, { x, y, size: fontSize, font, color });
+            }
+
+            const w = safeWidthOf(font, raw, fontSize);
+            if (isBold && !isSpace) {
+              currentPage.drawLine({
+                start: { x, y: y - 2 },
+                end: { x: x + w, y: y - 2 },
+                thickness: 0.9,
+                color: colorAccent
+              });
+            }
+
+            x += w;
+            if (isSpace) x += spaceExtra;
+          }
+
+          y -= fontSize + lineGap;
+          linesOnPage += 1;
+        }
+
+        y -= paraGap;
+      }
+    }
+
+    const outBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="adapted.pdf"');
+    return res.status(200).send(Buffer.from(outBytes));
+  } catch (error) {
+    console.error('Adapt error:', error);
+    return res.status(500).json({ error: 'Failed to adapt PDF', details: error.message });
+  }
+});
+
+
+const THEMES = {
+  default: {
+    accent: '#3F51B5',      // blu
+    lightAccent: '#C5CAE9', // blu chiaro
+    noteBg: '#FFF9C4',      // giallo chiaro
+    warnBg: '#FFCDD2',      // rosso chiaro
+    text: '#1A1A1A'
+  },
+  teal: {
+    accent: '#00897B',
+    lightAccent: '#B2DFDB',
+    noteBg: '#E0F2F1',
+    warnBg: '#FFECB3',
+    text: '#102A27'
+  },
+  orange: {
+    accent: '#FB8C00',
+    lightAccent: '#FFE0B2',
+    noteBg: '#FFF3E0',
+    warnBg: '#FFCDD2',
+    text: '#2A1905'
+  },
+  green: {
+    accent: '#2E7D32',
+    lightAccent: '#C8E6C9',
+    noteBg: '#E8F5E9',
+    warnBg: '#FFF59D',
+    text: '#0B1F0C'
+  }
+};
+
+const pickTheme = (name) => {
+  const key = String(name || 'default').toLowerCase();
+  return THEMES[key] || THEMES.default;
+};
+
+// HEX -> rgb()
+function hexToRgb(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
+  if (!m) return rgb(1,1,0);
+  return rgb(parseInt(m[1],16)/255, parseInt(m[2],16)/255, parseInt(m[3],16)/255);
+}
 
 // activate the server
 app.listen(port, () => {
