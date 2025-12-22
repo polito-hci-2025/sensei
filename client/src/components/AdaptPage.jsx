@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, FileText, ArrowLeft, Loader2 } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 import '../styles/AdaptPage.css';
-import { useUnsavedChanges } from '../contexts/UnsavedChangesContext.jsx';
+import API from '../API/API.mjs';
 
 function AdaptPage() {
   const navigate = useNavigate();
-  const { setIsDirty, clearDirty } = useUnsavedChanges();
   const [uploadedFile, setUploadedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [dragActive, setDragActive] = useState(false);
@@ -80,14 +79,6 @@ function AdaptPage() {
     setPreviewUrl(null);
   };
 
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
-
   const handleCheckboxChange = (value) => {
     setFormData(prev => ({
       ...prev,
@@ -100,13 +91,6 @@ function AdaptPage() {
   const hasUnsavedChanges = () => {
     return uploadedFile || formData.dsa.length > 0 || formData.subject || formData.grade;
   };
-
-  useEffect(() => {
-    setIsDirty(!!hasUnsavedChanges());
-    return () => {
-      clearDirty();
-    };
-  }, [uploadedFile, formData.dsa, formData.subject, formData.grade, setIsDirty, clearDirty]);
 
   const handleBack = () => {
     if (hasUnsavedChanges()) {
@@ -144,7 +128,6 @@ function AdaptPage() {
     setError('');
 
     try {
-      console.log('🚀 Starting PDF adaptation...');
       
       const formDataToSend = new FormData();
       formDataToSend.append('file', uploadedFile.file);
@@ -152,24 +135,8 @@ function AdaptPage() {
       formDataToSend.append('subject', formData.subject);
       formDataToSend.append('grade', formData.grade);
 
-      console.log('📤 Sending request to backend...');
-
-      const response = await fetch('http://localhost:3001/api/adapt/generate', {
-        method: 'POST',
-        body: formDataToSend
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate adapted PDF');
-      }
-
-      console.log('✅ Received response from backend');
-
-      const blob = await response.blob();
+      const blob = await API.generateAdaptedPdf(formDataToSend);
       const adaptedPdfUrl = URL.createObjectURL(blob);
-
-      console.log('📄 PDF generated successfully');
 
       // Salva il PDF adattato in sessionStorage
       sessionStorage.setItem('adaptedPdfUrl', adaptedPdfUrl);
@@ -185,7 +152,6 @@ function AdaptPage() {
       navigate('/adapted/preview/new');
       
     } catch (err) {
-      console.error('❌ Error generating PDF:', err);
       setError(err.message || 'Failed to generate adapted material. Please try again.');
       setTimeout(() => setError(''), 5000);
     } finally {

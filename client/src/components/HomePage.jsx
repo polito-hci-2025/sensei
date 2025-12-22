@@ -547,7 +547,6 @@ function HomePage() {
               <div className="homepage-empty">No shared works yet</div>
             )}
             {!isLoadingSharedWorks && !sharedWorksError && mostDownloaded.map((lesson) => (
-              console.log(lesson),
               <LessonCard key={lesson.id} lesson={lesson} />
             ))}
           </div>

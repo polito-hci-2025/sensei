@@ -824,8 +824,6 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   useEffect(() => {
     if (type !== 'adapted') return;
 
-    let lastBlobUrl = '';
-
     if (id === 'new') {
       const url = sessionStorage.getItem('adaptedPdfUrl') || '';
       const metaRaw = sessionStorage.getItem('adaptedPdfData') || '{}';
@@ -845,7 +843,6 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       setAdaptedPdfError('');
       setAdaptedPdfUrl(url);
       setAdaptedPdfNumPages(null);
-      lastBlobUrl = url;
 
       setIsShared(false);
       setFileData((prev) => ({
@@ -857,16 +854,6 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         description: prev.description || '',
       }));
     }
-
-    return () => {
-      if (lastBlobUrl && lastBlobUrl.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(lastBlobUrl);
-        } catch {
-          // ignore
-        }
-      }
-    };
   }, [type, id]);
 
   useEffect(() => {
@@ -1066,7 +1053,6 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         setIsDirtyLocal(false);
 
     } catch (error) {
-        console.error('Error fetching file data:', error);
     }
   };
 
@@ -1091,16 +1077,82 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         clearDirty();
         navigate('/');
     } catch (error) {
-        console.error('Error saving data:', error);
     }
   };
 
+  const triggerPdfDownload = (url, filename) => {
+    if (!url) return false;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noreferrer';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    return true;
+  };
+
+  const forceDownloadFromUrl = async (url, filename) => {
+    if (!url) return false;
+
+    // If it's already a blob URL, we can download directly.
+    if (String(url).startsWith('blob:') || String(url).startsWith('data:')) {
+      return triggerPdfDownload(url, filename);
+    }
+
+    // Fetch the PDF bytes and download as a Blob to force a real download.
+    const res = await fetch(url);
+    if (!res.ok) return false;
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    triggerPdfDownload(blobUrl, filename);
+    // Revoke shortly after triggering download.
+    window.setTimeout(() => {
+      try {
+        URL.revokeObjectURL(blobUrl);
+      } catch {
+        // ignore
+      }
+    }, 1500);
+    return true;
+  };
+
+  const buildDownloadFilename = (base) => {
+    const name = formatPdfDisplayName(base || 'document') || 'document';
+    return name.toLowerCase().endsWith('.pdf') ? name : `${name}.pdf`;
+  };
+
   const handleDownload = async () => {
-    try{
+    const isSharedDownload = type === 'shared' || isShared;
+
+    let pdfUrl = '';
+    let filenameBase = fileData.title || 'document';
+
+    if (type === 'created') {
+      pdfUrl = createdPdfUrl;
+      filenameBase = fileData.title || 'created';
+    } else if (type === 'adapted') {
+      pdfUrl = adaptedPdfUrl;
+      filenameBase = fileData.title || 'adapted';
+    } else {
+      pdfUrl = sharedPdfUrl;
+      filenameBase = sharedDisplayTitle || fileData.title || 'shared';
+    }
+
+    const ok = await forceDownloadFromUrl(pdfUrl, buildDownloadFilename(filenameBase));
+    if (!ok) {
+      // If PDF is still loading, do nothing.
+      return;
+    }
+
+    // Only shared works have a download counter in DB.
+    if (isSharedDownload) {
+      try {
         await API.download(id);
-        alert('Download completed!');
-    } catch (error) {
-        console.error('Error downloading file:', error);
+      } catch {
+        // ignore counter errors
+      }
     }
   };
 
@@ -1110,7 +1162,6 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         await API.deleteMyWork(id);
         navigate('/');
       } catch (error) {
-        console.error('Error deleting file:', error);
       }
     }
   };
