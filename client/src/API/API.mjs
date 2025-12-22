@@ -88,15 +88,15 @@ const createPDF = async (pdf) => {
         },
         credentials: 'include',
         body: JSON.stringify({
-            NamePDF: pdf.NamePDF,
-            Subject: pdf.Subject,
-            Grade: pdf.Grade,
-            Tag: pdf.Tag,
-            Description: pdf.Description,
-            Shared: pdf.Shared,
-            Download: pdf.Download,
-            Prof: pdf.Prof,
-            Type: pdf.Type
+            NamePDF: pdf.title,
+            Subject: pdf.subject,
+            Grade: pdf.grade,
+            Tag: pdf.tag,
+            Description: pdf.description,
+            Shared: pdf.shared,
+            Download: pdf.download,
+            Prof: 'prof. Rossi',
+            Type: 'created'
         })
     });
 

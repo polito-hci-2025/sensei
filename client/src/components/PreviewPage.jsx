@@ -20,7 +20,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     grade: 0,
     tag: '',
     description: '',
-    shared: false
+    shared: 0
   });
 
   const [isShared, setIsShared] = useState(false);
@@ -28,6 +28,8 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   
   useEffect(() => {
     if (isDraftCreatedPreview) {
+          console.log('draftwork:', draftWork);
+
       setIsShared(false);
       setFileData((prev) => ({
         ...prev,
@@ -35,7 +37,6 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       }));
       return;
     }
-
     if (!id) return;
     fetchFileData();
   }, [id, type, isDraftCreatedPreview]);
@@ -69,10 +70,22 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   const handleSave = async () => {
     try {
         const sharedValue = fileData.shared ? 1 : 0;
-        const description = fileData.description || ' '; // Invia uno spazio se vuota
-
+        const description = fileData.description || ' '; 
+        if(isDraftCreatedPreview){
+          console.log('Creating new PDF with data:', fileData);
+          const newCreated = await API.createPDF({...fileData, shared: sharedValue});
+          console.log('Newly created PDF:', newCreated);
+          for(const q of draftWork.questions){
+            await API.createContentPDF(newCreated.id_pdf, q.content, q.questionType, JSON.stringify(q.answers || []));
+          }
+          for(const p of draftWork.paragraphs){
+            await API.createContentPDF(newCreated.id_pdf, p.html, p.type, null);
+          }
+          alert('File created!');
+        }else{
         await API.updateInfo(Number(id), fileData.title, description, fileData.subject, fileData.grade, sharedValue);
-        alert('Modifiche salvate con successo!');
+        alert('Changes saved successfully!');
+        }
         navigate('/');
     } catch (error) {
         console.error('Error saving data:', error);
@@ -214,28 +227,6 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   };
 
   const renderInfoPanel = () => {
-    if (isDraftCreatedPreview) {
-      return (
-        <div className="preview-info-panel">
-          <h2>Document Info</h2>
-
-          <div className="preview-info-group">
-            <label>Document Name:</label>
-            <input
-              type="text"
-              className="preview-input"
-              value={fileData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-            />
-          </div>
-
-          <div className="preview-info-group">
-            <label>Created for:</label>
-            <div className="preview-info-value">{fileData.tag || '—'}</div>
-          </div>
-        </div>
-      );
-    }
 
     if (isShared) {
       return (
@@ -343,7 +334,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
               type="checkbox"
               id="shareCheckbox"
               checked={fileData.shared}
-              onChange={(e) => handleInputChange('shared', e.target.checked)}
+              onChange={(e) => handleInputChange('shared', e.target.checked ? 1 : 0)}
             />
             <label htmlFor="shareCheckbox">Share with community on save</label>
           </div>
