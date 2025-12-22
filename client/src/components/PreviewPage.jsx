@@ -825,10 +825,17 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     if (type !== 'adapted') return;
 
     let lastBlobUrl = '';
-    let cancelled = false;
 
     if (id === 'new') {
       const url = sessionStorage.getItem('adaptedPdfUrl') || '';
+      const metaRaw = sessionStorage.getItem('adaptedPdfData') || '{}';
+      let meta = {};
+      try {
+        meta = JSON.parse(metaRaw);
+      } catch {
+        meta = {};
+      }
+
       if (!url) {
         setAdaptedPdfError('No adapted PDF found. Please regenerate it from the Adapt page.');
         setAdaptedPdfUrl('');
@@ -839,10 +846,19 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       setAdaptedPdfUrl(url);
       setAdaptedPdfNumPages(null);
       lastBlobUrl = url;
+
+      setIsShared(false);
+      setFileData((prev) => ({
+        ...prev,
+        title: `${(meta.originalFileName || 'Adapted material').toString().replace(/\.pdf$/i, '')} - adapted`,
+        subject: meta.subject || '',
+        grade: meta.grade || 0,
+        tag: Array.isArray(meta.dsa) ? meta.dsa.join(', ') : '',
+        description: prev.description || '',
+      }));
     }
 
     return () => {
-      cancelled = true;
       if (lastBlobUrl && lastBlobUrl.startsWith('blob:')) {
         try {
           URL.revokeObjectURL(lastBlobUrl);
@@ -850,10 +866,9 @@ const PreviewPage = ({ type: typeProp } = {}) => {
           // ignore
         }
       }
-      void cancelled;
     };
   }, [type, id]);
-  
+
   useEffect(() => {
     if (isDraftCreatedPreview) {
       setIsShared(false);
@@ -862,6 +877,12 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         tag: Array.isArray(draftWork?.dsaTypes) ? draftWork.dsaTypes.join(', ') : '',
       }));
       setIsDirtyLocal(false);
+      return;
+    }
+
+    // adapted/new is sessionStorage-backed; do not fetch from API
+    if (type === 'adapted' && id === 'new') {
+      setIsShared(false);
       return;
     }
 
@@ -1213,10 +1234,15 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         </div>
       );
     } else if (type === 'adapted') {
+      const baseTitle = (fileData.title || '').split(' - ')[0];
+      const displayTitle = id === 'new'
+        ? (fileData.title || 'Adapted material')
+        : (formatPdfDisplayName(baseTitle) || baseTitle);
+
       return (
         <div className="preview-content-area">
           <div className="preview-content-card">
-            <h3>{formatPdfDisplayName(fileData.title.split(' - ')[0]) || fileData.title.split(' - ')[0]}</h3>
+            <h3>{displayTitle}</h3>
 
             <div className="preview-pdf-wrap">
               {adaptedPdfError && (
