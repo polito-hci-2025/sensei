@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Save, FileText, HelpCircle, Trash2 } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
+import { useUnsavedChanges } from '../contexts/UnsavedChangesContext.jsx';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import '../styles/CreatePage.css';
@@ -191,6 +192,7 @@ function ParagraphQuillEditor({ value, onChange, placeholder }) {
 function CreatePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setIsDirty, clearDirty } = useUnsavedChanges();
   const [selectedType, setSelectedType] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [paragraphs, setParagraphs] = useState([]);
@@ -207,6 +209,33 @@ function CreatePage() {
   const dsaTypes = ['Dysgraphia', 'Dyslexia', 'Dyscalculia', 'Dysorthography'];
 
   const didPrefillFromState = useRef(false);
+
+  const snapshotWork = (workLike) => {
+    const safe = workLike ?? {};
+    const dsaTypes = Array.isArray(safe.dsaTypes) ? safe.dsaTypes : [];
+    const qs = Array.isArray(safe.questions) ? safe.questions : [];
+    const ps = Array.isArray(safe.paragraphs) ? safe.paragraphs : [];
+
+    const normalized = {
+      dsaTypes: [...dsaTypes].slice().sort(),
+      questions: qs.map((q) => ({
+        id: q?.id ?? null,
+        questionType: q?.questionType ?? 'true_false',
+        content: q?.content ?? '',
+        answers: Array.isArray(q?.answers) ? q.answers : [],
+        title: q?.title ?? '',
+      })),
+      paragraphs: ps.map((p) => ({
+        id: p?.id ?? null,
+        html: p?.html ?? '',
+        title: p?.title ?? '',
+      })),
+    };
+
+    return JSON.stringify(normalized);
+  };
+
+  const baselineRef = useRef(snapshotWork({ dsaTypes: [], questions: [], paragraphs: [] }));
 
   useEffect(() => {
     if (didPrefillFromState.current) return;
@@ -225,7 +254,37 @@ function CreatePage() {
     setDraftParagraphHtml('');
     setDraftQuestionType('true_false');
     setDraftAnswers(['', '']);
+
+    baselineRef.current = snapshotWork(work);
   }, [location.state]);
+
+  const stripHtmlToText = (html) =>
+    (html || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const hasDraftInProgress = useMemo(() => {
+    const draftQuestionText = (draftText || '').trim();
+    const draftParagraphText = stripHtmlToText(draftParagraphHtml);
+    const hasAnswers = Array.isArray(draftAnswers) && draftAnswers.some((a) => (a || '').trim().length > 0);
+    return (
+      (selectedType === 'question' && (draftQuestionText.length > 0 || hasAnswers)) ||
+      (selectedType === 'paragraph' && draftParagraphText.length > 0)
+    );
+  }, [draftText, draftParagraphHtml, draftAnswers, selectedType]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    const currentSnapshot = snapshotWork({ dsaTypes: selectedDsaTypes, questions, paragraphs });
+    return currentSnapshot !== baselineRef.current || hasDraftInProgress;
+  }, [selectedDsaTypes, questions, paragraphs, hasDraftInProgress]);
+
+  useEffect(() => {
+    setIsDirty(!!hasUnsavedChanges);
+    return () => {
+      clearDirty();
+    };
+  }, [hasUnsavedChanges, setIsDirty, clearDirty]);
 
   useEffect(() => {
     if (selectedType === 'paragraph') return;
@@ -249,7 +308,11 @@ function CreatePage() {
   };
 
   const handleBack = () => {
-    setIsBackConfirmOpen(true);
+    if (hasUnsavedChanges) {
+      setIsBackConfirmOpen(true);
+      return;
+    }
+    navigate('/');
   };
 
   const handlePreviewAssignment = () => {
@@ -274,12 +337,6 @@ function CreatePage() {
       setDraftAnswers(['', '']);
     }
   };
-
-  const stripHtmlToText = (html) =>
-    (html || '')
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
 
   const handleSaveDraft = () => {
     if (selectedType === 'question') {
@@ -423,6 +480,23 @@ function CreatePage() {
     return '';
   }, [selectedType, draftParagraphHtml, draftText]);
 
+  const orderedOverviewItems = useMemo(() => {
+    const qs = Array.isArray(questions) ? questions : [];
+    const ps = Array.isArray(paragraphs) ? paragraphs : [];
+
+    return [
+      ...qs.map((q) => ({ kind: 'question', id: q?.id ?? 0, item: q })),
+      ...ps.map((p) => ({ kind: 'paragraph', id: p?.id ?? 0, item: p })),
+    ]
+      .filter((x) => x.item)
+      .sort((a, b) => {
+        const ai = Number(a.id) || 0;
+        const bi = Number(b.id) || 0;
+        if (ai === bi) return a.kind.localeCompare(b.kind);
+        return ai - bi;
+      });
+  }, [questions, paragraphs]);
+
   const suggestions = useMemo(
     () =>
       buildDraftSuggestions({
@@ -439,14 +513,24 @@ function CreatePage() {
 
   const getEditingQuestionNumber = () => {
     if (!editingId) return null;
-    const index = questions.findIndex((q) => q.id === editingId);
-    return index >= 0 ? index + 1 : null;
+    let qCount = 0;
+    for (const entry of orderedOverviewItems) {
+      if (entry.kind !== 'question') continue;
+      qCount += 1;
+      if (entry.item?.id === editingId) return qCount;
+    }
+    return null;
   };
 
   const getEditingParagraphNumber = () => {
     if (!editingId) return null;
-    const index = paragraphs.findIndex((p) => p.id === editingId);
-    return index >= 0 ? index + 1 : null;
+    let pCount = 0;
+    for (const entry of orderedOverviewItems) {
+      if (entry.kind !== 'paragraph') continue;
+      pCount += 1;
+      if (entry.item?.id === editingId) return pCount;
+    }
+    return null;
   };
 
   const handleRequestDeleteCurrent = () => {
@@ -488,12 +572,13 @@ function CreatePage() {
       <ConfirmDialog
         open={isBackConfirmOpen}
         title="Leave page?"
-        message="Are you sure you want to go back?"
-        confirmText="Go back"
+        message="You have unsaved changes. Are you sure you want to leave this page?"
+        confirmText="Leave"
         cancelText="Stay"
         onCancel={() => setIsBackConfirmOpen(false)}
         onConfirm={() => {
           setIsBackConfirmOpen(false);
+          clearDirty();
           navigate(-1);
         }}
       />
@@ -549,41 +634,36 @@ function CreatePage() {
           <div className="cp-overview-section cp-overview-empty">
             <span className="cp-overview-label">Overview</span>
 
-            {questions.map((question, index) => (
-              <div key={question.id} className="cp-question-item">
-                <button
-                  className="cp-saved-question"
-                  onClick={() => handleEditQuestion(question)}
-                >
-                  Question {index + 1}
-                </button>
-                <button
-                  className="cp-delete-btn"
-                  onClick={() => handleRequestDeleteFromOverview('question', question.id, index + 1)}
-                  aria-label={`Delete question ${index + 1}`}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
+            {(() => {
+              let qNumber = 0;
+              let pNumber = 0;
+              return orderedOverviewItems.map((entry) => {
+                const kind = entry.kind;
+                const item = entry.item;
+                if (!item) return null;
 
-            {paragraphs.map((paragraph, index) => (
-              <div key={paragraph.id} className="cp-question-item">
-                <button
-                  className="cp-saved-question"
-                  onClick={() => handleEditParagraph(paragraph)}
-                >
-                  Paragraph {index + 1}
-                </button>
-                <button
-                  className="cp-delete-btn"
-                  onClick={() => handleRequestDeleteFromOverview('paragraph', paragraph.id, index + 1)}
-                  aria-label={`Delete paragraph ${index + 1}`}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
+                const number = kind === 'question' ? (qNumber += 1) : (pNumber += 1);
+                const label = kind === 'question' ? `Question ${number}` : `Paragraph ${number}`;
+
+                return (
+                  <div key={`${kind}-${item.id}`} className="cp-question-item">
+                    <button
+                      className="cp-saved-question"
+                      onClick={() => (kind === 'question' ? handleEditQuestion(item) : handleEditParagraph(item))}
+                    >
+                      {label}
+                    </button>
+                    <button
+                      className="cp-delete-btn"
+                      onClick={() => handleRequestDeleteFromOverview(kind, item.id, number)}
+                      aria-label={`Delete ${kind} ${number}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                );
+              });
+            })()}
           </div>
 
           <div className="cp-left-actions">

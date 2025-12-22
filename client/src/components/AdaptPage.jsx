@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, FileText, ArrowLeft, Loader2 } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 import '../styles/AdaptPage.css';
+import { useUnsavedChanges } from '../contexts/UnsavedChangesContext.jsx';
 
 function AdaptPage() {
   const navigate = useNavigate();
+  const { setIsDirty, clearDirty } = useUnsavedChanges();
   const [uploadedFile, setUploadedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [dragActive, setDragActive] = useState(false);
@@ -78,6 +80,14 @@ function AdaptPage() {
     setPreviewUrl(null);
   };
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleCheckboxChange = (value) => {
     setFormData(prev => ({
       ...prev,
@@ -90,6 +100,13 @@ function AdaptPage() {
   const hasUnsavedChanges = () => {
     return uploadedFile || formData.dsa.length > 0 || formData.subject || formData.grade;
   };
+
+  useEffect(() => {
+    setIsDirty(!!hasUnsavedChanges());
+    return () => {
+      clearDirty();
+    };
+  }, [uploadedFile, formData.dsa, formData.subject, formData.grade, setIsDirty, clearDirty]);
 
   const handleBack = () => {
     if (hasUnsavedChanges()) {

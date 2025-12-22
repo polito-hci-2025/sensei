@@ -4,7 +4,9 @@
   grid-template-rows: 1fr;
   grid-column-gap: 0px;
   grid-row-gap: 0px;
-  height: 100vh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background: radial-gradient(ellipse at top left, #f8fafc, #f3f0ff, #fce7f3);
   padding-right: 1.25rem;
 }
@@ -17,6 +19,7 @@
   display: flex;
   justify-content: center;
   align-items: stretch;
+  min-height: 0;
 }
 
 .adapt-upload-section {
@@ -261,6 +264,7 @@
   overflow-y: auto;
   box-shadow: 0 0 12px rgb(0 0 0 / 0.08);
   min-width: 0;
+  min-height: 0;
 }
 
 .adapt-sidebar-content {
@@ -495,13 +499,13 @@
     display: flex;
     flex-direction: column;
     padding-right: 0;
-    height: auto;
-    min-height: 100vh;
+    height: 100%;
+    min-height: 0;
   }
   
   .adapt-main {
     flex: 1;
-    min-height: 60vh;
+    min-height: 0;
   }
   
   .adapt-sidebar {
