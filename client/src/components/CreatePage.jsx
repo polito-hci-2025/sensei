@@ -319,10 +319,17 @@ function CreatePage() {
     navigate('/create/preview', {
       state: {
         work: {
+          id: location.state?.work?.id || null,
           dsaTypes: selectedDsaTypes,
           questions,
           paragraphs,
+          title: location.state?.work?.title || '',
+          subject: location.state?.work?.subject || '',
+          grade: location.state?.work?.grade || 0,
+          description: location.state?.work?.description || '',
+          shared: location.state?.work?.shared || false,
         },
+        workId: location.state?.work?.id || location.state?.workId || null,
       },
     });
   };

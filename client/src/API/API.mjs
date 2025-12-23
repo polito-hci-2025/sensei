@@ -388,6 +388,48 @@ const generateAdaptedPdf = async (formData) => {
     return await response.blob();
 };
 
+// Save PDF (created or adapted) to server
+const savePdf = async (pdfBlob, metadata, type) => {
+    const formData = new FormData();
+    
+    // Converti il blob in file
+    const pdfFile = new File([pdfBlob], `${metadata.title}.pdf`, { 
+        type: 'application/pdf' 
+    });
+    
+    formData.append('file', pdfFile);
+    formData.append('NamePDF', metadata.title);
+    formData.append('Subject', metadata.subject);
+    formData.append('Grade', metadata.grade);
+    formData.append('Tag', metadata.tag);
+    formData.append('Description', metadata.description || '');
+    formData.append('Shared', metadata.shared ? 1 : 0);
+    formData.append('Type', type); // 'created' o 'adapted'
+
+    const response = await fetch(SERVER_URL + '/api/pdf/save', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+    });
+
+    if (!response.ok) {
+        let message = 'Failed to save PDF';
+        try {
+            const err = await response.json();
+            if (err.errors && Array.isArray(err.errors)) {
+                message = err.errors.map(e => e.msg).join(', ');
+            } else {
+                message = err.error || err.message || message;
+            }
+        } catch (e) {
+            // ignore
+        }
+        throw new Error(message);
+    }
+
+    return await response.json();
+};
+
 const API = {
     getMyWorkById,
     getAllMyWorks,
@@ -403,6 +445,7 @@ const API = {
     updateContentPDF,
     deleteAllContentPDF,
     deleteContentPDF,
-    generateAdaptedPdf
+    generateAdaptedPdf,
+    savePdf
 };
 export default API;

@@ -50,7 +50,7 @@ function App() {
           <Route path="/:type/preview/:id" element={<PreviewPage />} />
 
           <Route path="/adapt" element={<AdaptPage />} />
-          
+
           <Route path="/shared" element={<SharedPage />} />
           
           <Route path="/edit/:id" element={<EditPage />} />

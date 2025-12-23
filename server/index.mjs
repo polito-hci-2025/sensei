@@ -256,9 +256,43 @@ app.delete('/api/myworks/:id/delete', async (req, res) => {
     const result = await deleteMyWork(id);
 
     if(oldPdf.Type === 'created'){
-      const deleteContentResult = await deleteAllContentPDF(id);
+      await deleteAllContentPDF(id);
     }
     
+    // Cancella il file PDF fisico
+    try {
+      const pdfDir = path.resolve(__dirname, '../client/public/pdf');
+      
+      // Funzione per normalizzare il nome (rimuove spazi e underscore)
+      const normalizeName = (name) => {
+        return (name || '')
+          .toString()
+          .replace(/\.pdf$/i, '')
+          .replace(/[_\s]/g, '')  // Rimuove underscore e spazi
+          .toLowerCase();
+      };
+      
+      const normalizedDbName = normalizeName(oldPdf.NamePDF);
+      
+      // Leggi tutti i file nella cartella PDF
+      const files = fs.readdirSync(pdfDir);
+      
+      // Trova il file che corrisponde al nome normalizzato
+      const matchingFile = files.find(file => {
+        const normalizedFileName = normalizeName(file);
+        return normalizedFileName === normalizedDbName;
+      });
+      
+      if (matchingFile) {
+        const filePath = path.join(pdfDir, matchingFile);
+        fs.unlinkSync(filePath);
+      } else {
+      }
+    } catch (fileError) {
+      console.error('Error deleting PDF file:', fileError);
+      // Non bloccare la risposta se la cancellazione del file fallisce
+    }
+
     if (result) {
       res.json(result);
     } else {
@@ -671,6 +705,146 @@ app.post('/api/adapt/generate', upload.single('file'), async (req, res) => {
   } catch (error) {
     console.error('Adapt error:', error);
     return res.status(500).json({ error: 'Failed to adapt PDF', details: error.message });
+  }
+});
+
+// POST /api/pdf/save - Salva PDF (created o adapted) su disco e database
+app.post('/api/pdf/save', upload.single('file'), [
+  check('NamePDF').notEmpty().withMessage('NamePDF is mandatory'),
+  check('Subject').notEmpty().withMessage('Subject is mandatory'),
+  check('Grade').notEmpty().withMessage('Grade is mandatory'),
+  check('Shared').isNumeric().withMessage('Shared must be numeric'),
+  check('Type').isIn(['created', 'adapted']).withMessage('Type must be created or adapted')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Missing PDF file' });
+    }
+
+    const { NamePDF, Subject, Grade, Tag, Description, Shared, Type } = req.body;
+    
+    // Salva il file PDF nella cartella public/pdf
+    const pdfDir = path.resolve(__dirname, '../client/public/pdf');
+    if (!fs.existsSync(pdfDir)) {
+      fs.mkdirSync(pdfDir, { recursive: true });
+    }
+
+    // Crea un nome file sicuro
+    const safeFileName = NamePDF
+      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/_+/g, '_')
+      .trim() + '.pdf';
+    
+    const filePath = path.join(pdfDir, safeFileName);
+    
+    // Scrivi il file sul disco
+    fs.writeFileSync(filePath, req.file.buffer);
+
+    // Salva i metadati nel database
+    const newWork = {
+      NamePDF: safeFileName,
+      Subject,
+      Grade: Number(Grade),
+      Tag: Tag || '',
+      Description: Description || '',
+      Shared: Number(Shared),
+      Download: 0,
+      Prof: 'prof. Rossi',
+      Type: Type // 'created' o 'adapted'
+    };
+
+    const created = await createPDF(newWork);
+    
+    res.status(201).json({ 
+      ...created, 
+      message: 'PDF saved successfully',
+      fileName: safeFileName 
+    });
+
+  } catch (error) {
+    console.error('Error saving PDF:', error);
+    res.status(500).json({ 
+      error: 'Error saving PDF', 
+      details: error.message 
+    });
+  }
+});
+
+// POST /api/pdf/save-file - Salva SOLO il file PDF fisico (per created)
+app.post('/api/pdf/save-file', upload.single('file'), async (req, res) => {
+  try {
+    const { fileName, oldFileName } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Missing PDF file' });
+    }
+    
+    // Salva il file PDF nella cartella public/pdf
+    const pdfDir = path.resolve(__dirname, '../client/public/pdf');
+    if (!fs.existsSync(pdfDir)) {
+      fs.mkdirSync(pdfDir, { recursive: true });
+    }
+
+    const safeFileName = fileName
+      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/_+/g, '_')
+      .trim() + '.pdf';
+
+    // Se esiste un vecchio file con nome diverso, eliminalo
+    if (oldFileName && oldFileName !== fileName) {
+      // Funzione per normalizzare il nome (rimuove spazi e underscore)
+      const normalizeName = (name) => {
+        return (name || '')
+          .toString()
+          .replace(/\.pdf$/i, '')
+          .replace(/[_\s]/g, '')  // Rimuove underscore e spazi
+          .toLowerCase();
+      };
+      
+      const normalizedOldName = normalizeName(oldFileName);
+      const normalizedNewName = normalizeName(fileName);
+      
+      // Solo se i nomi NORMALIZZATI sono diversi, cerca ed elimina il vecchio file
+      if (normalizedOldName !== normalizedNewName) {
+        // Leggi tutti i file nella cartella PDF
+        const files = fs.readdirSync(pdfDir);
+        
+        // Trova il file che corrisponde al nome normalizzato
+        const matchingFile = files.find(file => {
+          const normalizedFileName = normalizeName(file);
+          return normalizedFileName === normalizedOldName;
+        });
+        
+        if (matchingFile) {
+          const oldFilePath = path.join(pdfDir, matchingFile);
+          fs.unlinkSync(oldFilePath);
+        } 
+      }
+    }
+    
+    const filePath = path.join(pdfDir, safeFileName);
+    
+    // Scrivi il file sul disco
+    fs.writeFileSync(filePath, req.file.buffer);
+    
+    res.status(200).json({ 
+      message: 'PDF file saved successfully',
+      fileName: safeFileName 
+    });
+
+  } catch (error) {
+    console.error('Error saving PDF file:', error);
+    res.status(500).json({ 
+      error: 'Error saving PDF file', 
+      details: error.message 
+    });
   }
 });
 

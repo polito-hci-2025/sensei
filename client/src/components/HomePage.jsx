@@ -187,22 +187,26 @@ function HomePage() {
         navigate('/create', {
           state: {
             work: {
+              id: work.id,
               ...work,
               questions,
               paragraphs,
-              dsaTypes: [],
+              dsaTypes: splitDsaTags(work.tag),
             },
+            workId: work.id,
           },
         });
       } catch {
         navigate('/create', {
           state: {
             work: {
+              id: work.id,
               ...work,
               questions: [],
               paragraphs: [],
               dsaTypes: [],
             },
+            workId: work.id
           },
         });
       }

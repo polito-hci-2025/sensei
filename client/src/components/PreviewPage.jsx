@@ -87,7 +87,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         answers: Array.isArray(q?.answers) ? q.answers.map((a) => (a ?? '').toString()) : [],
       })),
     };
-  }, [isDraftCreatedPreview, draftWork, fileData.tag]);
+  }, [isDraftCreatedPreview, draftWork]);
 
   useEffect(() => {
     if (type !== 'created' || isDraftCreatedPreview) {
@@ -811,7 +811,11 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     return () => {
       cancelled = true;
       if (lastUrl) URL.revokeObjectURL(lastUrl);
+        // Pulisci anche lo stato quando cambi sezione
+    setCreatedPdfUrl('');
+    setCreatedPdfNumPages(null);
     };
+    
   }, [type, createdPdfKey]);
 
   useEffect(() => {
@@ -849,7 +853,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         ...prev,
         title: `${(meta.originalFileName || 'Adapted material').toString().replace(/\.pdf$/i, '')} - adapted`,
         subject: meta.subject || '',
-        grade: meta.grade || 0,
+        grade: parseInt(meta.grade) || 0,
         tag: Array.isArray(meta.dsa) ? meta.dsa.join(', ') : '',
         description: prev.description || '',
       }));
@@ -858,12 +862,16 @@ const PreviewPage = ({ type: typeProp } = {}) => {
 
   useEffect(() => {
     if (isDraftCreatedPreview) {
-          console.log('draftwork:', draftWork);
 
       setIsShared(false);
       setFileData((prev) => ({
         ...prev,
+        title: draftWork?.title || '',           
+        subject: draftWork?.subject || '',       
+        grade: draftWork?.grade || 0,            
+        description: draftWork?.description || '',
         tag: Array.isArray(draftWork?.dsaTypes) ? draftWork.dsaTypes.join(', ') : '',
+        shared: draftWork?.shared ? 1 : 0,
       }));
       setIsDirtyLocal(false);
       return;
@@ -944,6 +952,10 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     return () => {
       cancelled = true;
       controller.abort();
+
+      // Pulisci anche lo stato quando cambi sezione
+      setSharedPdfUrl('/pdf/1_Anomaly_Segmentation.pdf');
+      setSharedPdfNumPages(null);
     };
   }, [type, fileData.title]);
 
@@ -1017,6 +1029,9 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     return () => {
       cancelled = true;
       controller.abort();
+      // Pulisci anche lo stato quando cambi sezione
+      setAdaptedPdfUrl('');
+      setAdaptedPdfNumPages(null);
     };
   }, [type, id, fileData.title]);
 
@@ -1051,7 +1066,9 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         }else {
             data = await API.getMyWorkById(id);
         }
-        setFileData(data);
+        setFileData({...data,
+          shared: data.shared ? 1 : 0
+        });
         setIsDirtyLocal(false);
 
     } catch (error) {
@@ -1069,30 +1086,240 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   };
 
   const handleSave = async () => {
-    try {
-        const sharedValue = fileData.shared ? 1 : 0;
-        const description = fileData.description || ' '; 
-        if(isDraftCreatedPreview){
-          console.log('Creating new PDF with data:', fileData);
-          const newCreated = await API.createPDF({...fileData, shared: sharedValue});
-          console.log('Newly created PDF:', newCreated);
-          for(const q of draftWork.questions){
-            await API.createContentPDF(newCreated.id_pdf, q.content, q.questionType, JSON.stringify(q.answers || []));
+  try {
+    const sharedValue = fileData.shared ? 1 : 0;
+    const description = fileData.description || ' '; 
+    
+    if (isDraftCreatedPreview) {
+      // CREATED - Salva PDF generato dal frontend
+      if (!createdPdfUrl) {
+        alert('PDF not generated yet.');
+        return;
+      }
+
+      // Converti blob URL in blob
+      const response = await fetch(createdPdfUrl);
+      const blob = await response.blob();
+
+      // 1. Crea nome file sicuro PRIMA
+      const safeFileName = (fileData.title || 'Untitled')
+        .replace(/[^a-zA-Z0-9\s-]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .trim();
+
+            // Controlla se stiamo modificando un work esistente
+      const existingWorkId = draftWork?.id || location.state?.workId || null;
+
+      if (existingWorkId) {
+        
+        // RECUPERA IL VECCHIO NOME DEL FILE PRIMA DI AGGIORNARE
+        const oldWorkData = await API.getMyWorkById(existingWorkId);
+        const oldFileName = oldWorkData.title;
+
+        // Aggiorna le info del PDF
+        await API.updateInfo(
+          existingWorkId,
+          safeFileName,
+          description,
+          fileData.subject,
+          fileData.grade,
+          sharedValue
+        );
+        
+        // Ottieni i content esistenti dal database
+        const existingContents = await API.getAllContentByPdf(existingWorkId);
+        const existingContentIds = new Set(existingContents.map(c => c.id));
+        
+        // Raccogli tutti i content del draft (con i loro ID originali se esistono)
+        const allDraftContents = [
+          ...draftWork.questions.map(q => ({ ...q, contentType: 'question' })),
+          ...draftWork.paragraphs.map(p => ({ ...p, contentType: 'paragraph' }))
+        ];
+        
+        const draftContentIds = new Set(
+          allDraftContents
+            .map(c => c.id)
+            .filter(id => typeof id === 'number' && id < 1000000000000) // IDs dal DB (non Date.now())
+        );
+        
+        // Elimina i content che sono stati rimossi dall'utente
+        for (const existingContent of existingContents) {
+          if (!draftContentIds.has(existingContent.id)) {
+            await API.deleteContentPDF(existingWorkId, existingContent.id);
           }
-          for(const p of draftWork.paragraphs){
-            await API.createContentPDF(newCreated.id_pdf, p.html, p.type, null);
-          }
-          alert('File created!');
-        }else{
-        await API.updateInfo(Number(id), fileData.title, description, fileData.subject, fileData.grade, sharedValue);
-        alert('Modifiche salvate con successo!');
-        setIsDirtyLocal(false);
-        clearDirty();
-        navigate('/');
         }
-    } catch (error) {
+        
+        // Aggiorna o crea i content del draft
+        for (const q of draftWork.questions) {
+          const isExisting = typeof q.id === 'number' && existingContentIds.has(q.id);
+          
+          if (isExisting) {
+            // UPDATE content esistente
+            await API.updateContentPDF(
+              existingWorkId,
+              q.id,
+              q.content,
+              q.questionType,
+              JSON.stringify(q.answers || [])
+            );
+          } else {
+            // CREATE nuovo content
+            await API.createContentPDF(
+              existingWorkId,
+              q.content,
+              q.questionType,
+              JSON.stringify(q.answers || [])
+            );
+          }
+        }
+        
+        for (const p of draftWork.paragraphs) {
+          const isExisting = typeof p.id === 'number' && existingContentIds.has(p.id);
+          
+          if (isExisting) {
+            // UPDATE content esistente
+            await API.updateContentPDF(
+              existingWorkId,
+              p.id,
+              p.html,
+              'paragraph',
+              null
+            );
+          } else {
+            // CREATE nuovo content
+            await API.createContentPDF(
+              existingWorkId,
+              p.html,
+              'paragraph',
+              null
+            );
+          }
+        }
+        // 4. Salva il file PDF fisico (sovrascrive quello esistente)
+        const formData = new FormData();
+        const pdfFile = new File([blob], `${safeFileName}.pdf`, { 
+          type: 'application/pdf' 
+        });
+        formData.append('file', pdfFile);
+        formData.append('fileName', safeFileName);
+
+        // INVIA SEMPRE il vecchio nome originale dal DB (non sanificato)
+        // Il server si occuperà di normalizzarlo e trovare il file corrispondente
+        formData.append('oldFileName', oldFileName);
+
+        const saveResponse = await fetch('http://localhost:3001/api/pdf/save-file', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+
+        if (!saveResponse.ok) {
+          throw new Error('Failed to save PDF file');
+        }
+
+        alert('Created PDF updated successfully!');
+      } else {
+
+      // Crea il record nel database con il nome file SANIFICATO
+      const newCreated = await API.createPDF({
+        title: safeFileName,  
+        subject: fileData.subject,
+        grade: fileData.grade,
+        tag: fileData.tag,
+        description: fileData.description,
+        shared: sharedValue,
+        download: 0
+      });
+
+      // 3. Salva i contenuti (questions e paragraphs)
+      for (const q of draftWork.questions) {
+        await API.createContentPDF(
+          newCreated.id_pdf, 
+          q.content, 
+          q.questionType, 
+          JSON.stringify(q.answers || [])
+        );
+      }
+      for (const p of draftWork.paragraphs) {
+        await API.createContentPDF(
+          newCreated.id_pdf, 
+          p.html, 
+          'paragraph', 
+          null
+        );
+      }
+
+      // 4. Salva il file PDF fisico
+      const formData = new FormData();
+      const pdfFile = new File([blob], `${safeFileName}.pdf`, { 
+        type: 'application/pdf' 
+      });
+      formData.append('file', pdfFile);
+      formData.append('fileName', safeFileName);
+
+      const saveResponse = await fetch('http://localhost:3001/api/pdf/save-file', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save PDF file');
+      }
+    
+      alert('Created PDF saved successfully!');
     }
-  };
+    setIsDirtyLocal(false);
+    clearDirty();
+    navigate('/');
+
+    } else if (type === 'adapted' && id === 'new') {
+      const blobUrl = sessionStorage.getItem('adaptedPdfUrl');
+      if (!blobUrl) {
+        alert('PDF not found. Please regenerate it.');
+        return;
+      }
+
+      const response = await fetch(blobUrl);
+      const blob = await response.blob();
+
+      await API.savePdf(blob, {
+        title: fileData.title,
+        subject: fileData.subject,
+        grade: fileData.grade,
+        tag: fileData.tag,
+        description: fileData.description,
+        shared: sharedValue
+      }, 'adapted');
+
+      sessionStorage.removeItem('adaptedPdfUrl');
+      sessionStorage.removeItem('adaptedPdfData');
+
+      alert('Adapted PDF saved successfully!');
+      setIsDirtyLocal(false);
+      clearDirty();
+      navigate('/');
+
+    } else {
+      await API.updateInfo(
+        Number(id), 
+        fileData.title, 
+        description, 
+        fileData.subject, 
+        fileData.grade, 
+        sharedValue
+      );
+      alert('Modifiche salvate con successo!');
+      setIsDirtyLocal(false);
+      clearDirty();
+      navigate('/');
+    }
+  } catch (error) {
+    alert(`Error: ${error.message}`);
+    console.error('Save error:', error);
+  }
+};
 
   const triggerPdfDownload = (url, filename) => {
     if (!url) return false;
@@ -1486,6 +1713,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
                     value={fileData.subject}
                     onChange={(e) => handleInputChange('subject', e.target.value)}
                     >
+                    <option value="">Select...</option>
                     <option value="History">History</option>
                     <option value="Math">Math</option>
                     <option value="Science">Science</option>
@@ -1499,6 +1727,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
                         value={fileData.grade}
                         onChange={(e) => handleInputChange('grade', parseInt(e.target.value, 10))}
                     >
+                        <option value={0}>Select...</option>
                         <option value={1}>1°</option>
                         <option value={2}>2°</option>
                         <option value={3}>3°</option>
@@ -1521,7 +1750,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
             <input
               type="checkbox"
               id="shareCheckbox"
-              checked={fileData.shared}
+              checked={Boolean(fileData.shared)}
               onChange={(e) => handleInputChange('shared', e.target.checked ? 1 : 0)}
             />
             <label htmlFor="shareCheckbox">Share with community on save</label>
@@ -1569,6 +1798,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
                 value={fileData.subject}
                 onChange={(e) => handleInputChange('subject', e.target.value)}
               >
+                <option value="">Select...</option>
                 <option value="History">History</option>
                 <option value="Math">Math</option>
                 <option value="Science">Science</option>
@@ -1582,6 +1812,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
                 value={fileData.grade}
                 onChange={(e) => handleInputChange('grade', parseInt(e.target.value, 10))}
               >
+                <option value={0}>Select...</option>
                 <option value={1}>1°</option>
                 <option value={2}>2°</option>
                 <option value={3}>3°</option>
@@ -1604,8 +1835,8 @@ const PreviewPage = ({ type: typeProp } = {}) => {
             <input
               type="checkbox"
               id="shareCheckbox"
-              checked={fileData.shared}
-              onChange={(e) => handleInputChange('shared', e.target.checked)}
+              checked={Boolean(fileData.shared)}
+              onChange={(e) => handleInputChange('shared', e.target.checked ? 1 : 0)}
             />
             <label htmlFor="shareCheckbox">Share with community</label>
           </div>
