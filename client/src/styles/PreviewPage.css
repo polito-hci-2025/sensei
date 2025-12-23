@@ -50,7 +50,7 @@
   background-color: #f9fafb;
   border-color: #7c3aed;
   color: #7c3aed;
-  transform: translateX(-2px);
+  transform: translateX(-0.125rem);
 }
 
 .preview-header h1 {
@@ -84,7 +84,7 @@
   min-height: 0;
   overflow: hidden;
   width: 100%;
-  max-width: 1360px;
+  max-width: min(95%, 85rem);
   margin: 0 auto;
   gap: 1rem;
   padding: 0 2rem 1.5rem;
@@ -210,9 +210,9 @@
 }
 
 .preview-line {
-  height: 2px;
+  height: 0.125rem;
   background: #e5e7eb;
-  border-radius: 1px;
+  border-radius: 0.0625rem;
 }
 
 .preview-placeholder-content {
@@ -266,7 +266,8 @@
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   height: 100%;
 }
 
@@ -274,6 +275,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   padding: 0.75rem 1.75rem 1.25rem;
   margin: -0.25rem -1.75rem -1.5rem;
   background: white;
@@ -416,7 +421,7 @@
 
 .preview-button.download:hover {
   background: #6d28d9;
-  transform: translateY(-1px);
+  transform: translateY(-0.0625rem);
   box-shadow: 0 4px 6px rgb(0 0 0 / 0.15);
 }
 
@@ -426,7 +431,7 @@
 
 .preview-button.save:hover {
   background: #9333ea;
-  transform: translateY(-1px);
+  transform: translateY(-0.0625rem);
   box-shadow: 0 4px 6px rgb(0 0 0 / 0.15);
 }
 
@@ -436,7 +441,7 @@
 
 .preview-button.delete:hover {
   background: #db2777;
-  transform: translateY(-1px);
+  transform: translateY(-0.0625rem);
   box-shadow: 0 4px 6px rgb(0 0 0 / 0.15);
 }
 
@@ -444,13 +449,21 @@
 
 
 /* Responsive design */
-@media (max-width: 1024px) {
+@media (max-width: 64em) {
+  .preview-main-wrapper {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .preview-main {
     flex-direction: column;
+    overflow: visible;
   }
 
   .preview-info-panel {
     width: 100%;
+    height: auto;
+    overflow: visible;
   }
 
   .preview-content-card {

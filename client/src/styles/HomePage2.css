@@ -6,7 +6,7 @@
 
 /* Sidebar */
 .homepage-sidebar {
-  width: 280px;
+  width: clamp(16rem, 24%, 17.5rem);
   background-color: #F2E9E4;
   border-right: 1px solid #C9ADA7;
   padding: 2rem 1.5rem;
@@ -36,7 +36,7 @@
   padding: 0.75rem;
   background-color: #F2E9E4;
   border: 1px solid #C9ADA7;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -89,7 +89,7 @@
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   font-weight: 600;
   font-size: 0.75rem;
   cursor: pointer;
@@ -103,7 +103,7 @@
 
 .homepage-action-button.create:hover {
   background-color: #22223B;
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
 }
 
 .homepage-action-button.adapt {
@@ -113,7 +113,7 @@
 
 .homepage-action-button.adapt:hover {
   background-color: #4A4E69;
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
 }
 
 .homepage-action-button.shared {
@@ -123,7 +123,7 @@
 
 .homepage-action-button.shared:hover {
   background-color: #9A8C98;
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
 }
 
 /* Main Content */
@@ -146,14 +146,14 @@
 
 .homepage-lessons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18.75rem), 1fr));
   gap: 1.5rem;
 }
 
 /* Lesson Card */
 .homepage-lesson-card {
   background-color: white;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   padding: 1.5rem;
   border: 1px solid #C9ADA7;
   transition: all 0.2s;
@@ -165,7 +165,7 @@
 .homepage-lesson-card:hover {
   box-shadow: 0 4px 12px rgba(34, 34, 59, 0.1);
   border-color: #9A8C98;
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
 }
 
 .homepage-lesson-card.dyslexia {
@@ -193,7 +193,7 @@
   color: #F2E9E4;
   background-color: #4A4E69;
   padding: 0.25rem 0.75rem;
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .homepage-lesson-card-downloads {
@@ -230,7 +230,7 @@
 .homepage-lesson-card-tag {
   font-size: 0.75rem;
   padding: 0.35rem 0.75rem;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   font-weight: 500;
   background-color: #F2E9E4;
   color: #4A4E69;
@@ -274,7 +274,7 @@
   background-color: #4A4E69;
   color: #F2E9E4;
   border: none;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   font-weight: 600;
   font-size: 0.75rem;
   cursor: pointer;
@@ -283,13 +283,13 @@
 
 .homepage-lesson-card-button:hover {
   background-color: #22223B;
-  transform: translateY(-1px);
+  transform: translateY(-0.0625rem);
 }
 
 /* Scrollbar styling */
 .homepage-sidebar::-webkit-scrollbar,
 .homepage-main-content::-webkit-scrollbar {
-  width: 8px;
+  width: 0.5rem;
 }
 
 .homepage-sidebar::-webkit-scrollbar-track,
@@ -300,7 +300,7 @@
 .homepage-sidebar::-webkit-scrollbar-thumb,
 .homepage-main-content::-webkit-scrollbar-thumb {
   background: #C9ADA7;
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .homepage-sidebar::-webkit-scrollbar-thumb:hover,

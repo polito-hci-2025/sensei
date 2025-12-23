@@ -3,8 +3,8 @@
 .layout-container {
   min-height: 100vh;
   background-color: white;
-  --layout-header-height: 76px;
-  --layout-footer-height: 36px;
+  --layout-header-height: 4.75rem;
+  --layout-footer-height: 2.25rem;
 }
 
 .layout-header {
@@ -53,7 +53,7 @@
   font-size: 0.8125rem;
   color: #9ca3af;
   font-weight: 400;
-  margin-bottom: -2px;
+  margin-bottom: -0.125rem;
 }
 
 .layout-user-name {
@@ -112,7 +112,7 @@
   font-weight: 600;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
   .layout-footer-content {
     padding: 0 1rem;
     justify-content: flex-start;

@@ -28,10 +28,10 @@ body {
 }
 
 .sensei-confirm-modal {
-  width: min(420px, 100%);
+  width: min(26.25rem, 100%);
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  border-radius: 1rem;
   padding: 1.25rem 1.25rem 1rem;
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }

@@ -1,10 +1,10 @@
 /* App specific styles */
 
 /* Layout utilities */
-.max-w-\[1400px\] { max-width: 1400px; }
+.max-w-\[1400px\] { max-width: min(95%, 87.5rem); }
 .mx-auto { margin-left: auto; margin-right: auto; }
-.rounded-\[50px\] { border-radius: 50px; }
-.rounded-\[35px\] { border-radius: 35px; }
+.rounded-\[50px\] { border-radius: 3.125rem; }
+.rounded-\[35px\] { border-radius: 2.1875rem; }
 .rounded-b-3xl { border-bottom-left-radius: 1.5rem; border-bottom-right-radius: 1.5rem; }
 .w-40 { width: 10rem; }
 .h-7 { height: 1.75rem; }
@@ -24,7 +24,7 @@
 .to-pink-600 { --tw-gradient-to: #db2777; }
 .border-indigo-200 { border-color: #c7d2fe; }
 .border-b { border-bottom-width: 1px; }
-.h-\[calc\(100\%-88px\)\] { height: calc(100% - 88px); }
+.h-\[calc\(100\%-88px\)\] { height: calc(100% - 5.5rem); }
 
-.h-\[calc\(100vh-88px\)\] { height: calc(100vh - 88px); }
+.h-\[calc\(100vh-88px\)\] { height: calc(100vh - 5.5rem); }
 .border-gray-300 { border-color: #d1d5db; }
