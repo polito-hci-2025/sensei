@@ -415,6 +415,18 @@
   cursor: pointer;
 }
 
+.preview-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.preview-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .preview-button.download {
   background: #7c3aed;
 }

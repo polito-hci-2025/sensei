@@ -80,6 +80,21 @@ export const updateInfo = (id, NamePDF, Description, Subject, Grade, Shared) => 
     });
 }
 
+export const updateMyWorkName = (id, NamePDF) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'UPDATE myworks SET NamePDF = ? WHERE ID = ?';
+        db.run(sql, [NamePDF, id], function(err) {
+            if (err) {
+                reject(err);
+            } else if (this.changes === 0) {
+                resolve({ error: 'id non trovato' });
+            } else {
+                resolve({ message: 'Nome file aggiornato con successo' });
+            }
+        });
+    });
+}
+
 export const deleteMyWork = (id_pdf) => {
     return new Promise((resolve, reject) => {
         const sql = 'DELETE FROM myworks WHERE ID = ?';

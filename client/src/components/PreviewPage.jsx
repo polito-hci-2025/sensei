@@ -51,12 +51,17 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   const [createdPdfError, setCreatedPdfError] = useState('');
   const createdPdfScrollRef = useRef(null);
 
+  // Keep the previewed physical file stable while the user edits the title.
+  const [createdPdfDiskName, setCreatedPdfDiskName] = useState('');
+
   const [storedCreatedPdfInput, setStoredCreatedPdfInput] = useState(null);
 
   const [adaptedPdfUrl, setAdaptedPdfUrl] = useState('');
   const [adaptedPdfNumPages, setAdaptedPdfNumPages] = useState(null);
   const [adaptedPdfError, setAdaptedPdfError] = useState('');
   const adaptedPdfScrollRef = useRef(null);
+
+  const [adaptedPdfDiskName, setAdaptedPdfDiskName] = useState('');
 
   const [sharedPdfUrl, setSharedPdfUrl] = useState('/pdf/1_Anomaly_Segmentation.pdf');
   const [sharedPdfNumPages, setSharedPdfNumPages] = useState(null);
@@ -67,6 +72,14 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     if (type !== 'shared') return '';
     return formatPdfDisplayName(fileData.title);
   }, [type, fileData.title]);
+
+  const canSave = useMemo(() => {
+    if (isShared) return false;
+    const titleOk = (fileData.title || '').toString().trim().length > 0;
+    const subjectOk = (fileData.subject || '').toString().trim().length > 0;
+    const gradeOk = Number(fileData.grade) > 0;
+    return titleOk && subjectOk && gradeOk;
+  }, [isShared, fileData.title, fileData.subject, fileData.grade]);
 
   const draftPdfInput = useMemo(() => {
     if (!isDraftCreatedPreview) return null;
@@ -811,12 +824,83 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     return () => {
       cancelled = true;
       if (lastUrl) URL.revokeObjectURL(lastUrl);
-        // Pulisci anche lo stato quando cambi sezione
-    setCreatedPdfUrl('');
-    setCreatedPdfNumPages(null);
     };
     
   }, [type, createdPdfKey]);
+
+  useEffect(() => {
+    // For persisted created works, load the physical PDF from /myworks instead of regenerating.
+    if (type !== 'created') return;
+    if (isDraftCreatedPreview) return;
+    if (!id) return;
+
+    const fallbackFile = '1_Anomaly_Segmentation.pdf';
+    const rawTitle = (createdPdfDiskName || '').trim();
+
+    const base = rawTitle.replace(/\.pdf$/i, '').trim();
+    const candidates = [];
+    if (base) {
+      candidates.push(`${base}.pdf`);
+      candidates.push(`${base.replace(/\s+/g, '_')}.pdf`);
+      candidates.push(`${base.replace(/_/g, ' ')}.pdf`);
+    }
+    candidates.push(fallbackFile);
+
+    const controller = new AbortController();
+    let cancelled = false;
+
+    const looksLikePdf = (res) => {
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      return ct.includes('application/pdf');
+    };
+
+    const existsPdf = async (url) => {
+      try {
+        const head = await fetch(url, { method: 'HEAD', signal: controller.signal });
+        if (head.ok && looksLikePdf(head)) return true;
+        if (head.ok && !looksLikePdf(head)) return false;
+      } catch {
+        // ignore
+      }
+
+      try {
+        const get = await fetch(url, {
+          method: 'GET',
+          headers: { Range: 'bytes=0-0' },
+          signal: controller.signal,
+        });
+        if ((get.status === 206 || get.status === 200) && looksLikePdf(get)) return true;
+      } catch {
+        // ignore
+      }
+      return false;
+    };
+
+    const resolve = async () => {
+      setCreatedPdfError('');
+      setCreatedPdfNumPages(null);
+
+      for (const name of candidates) {
+        const url = `/myworks/${encodeURIComponent(name)}`;
+        const ok = await existsPdf(url);
+        if (cancelled) return;
+        if (ok) {
+          setCreatedPdfUrl(url);
+          return;
+        }
+      }
+
+      if (!cancelled) {
+        setCreatedPdfUrl(`/myworks/${encodeURIComponent(fallbackFile)}`);
+      }
+    };
+
+    resolve();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [type, id, isDraftCreatedPreview, createdPdfDiskName]);
 
   useEffect(() => {
     if (type !== 'created') return;
@@ -952,10 +1036,6 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     return () => {
       cancelled = true;
       controller.abort();
-
-      // Pulisci anche lo stato quando cambi sezione
-      setSharedPdfUrl('/pdf/1_Anomaly_Segmentation.pdf');
-      setSharedPdfNumPages(null);
     };
   }, [type, fileData.title]);
 
@@ -964,7 +1044,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     if (!id || id === 'new') return;
 
     const fallbackFile = '1_Anomaly_Segmentation.pdf';
-    const rawTitle = (fileData.title || '').trim();
+    const rawTitle = (adaptedPdfDiskName || '').trim();
 
     const base = rawTitle.replace(/\.pdf$/i, '').trim();
     const candidates = [];
@@ -1010,7 +1090,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       setAdaptedPdfNumPages(null);
 
       for (const name of candidates) {
-        const url = `/pdf/${encodeURIComponent(name)}`;
+        const url = `/myworks/${encodeURIComponent(name)}`;
         const ok = await existsPdf(url);
         if (cancelled) return;
         if (ok) {
@@ -1020,7 +1100,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       }
 
       if (!cancelled) {
-        setAdaptedPdfUrl(`/pdf/${encodeURIComponent(fallbackFile)}`);
+        setAdaptedPdfUrl(`/myworks/${encodeURIComponent(fallbackFile)}`);
       }
     };
 
@@ -1029,11 +1109,8 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     return () => {
       cancelled = true;
       controller.abort();
-      // Pulisci anche lo stato quando cambi sezione
-      setAdaptedPdfUrl('');
-      setAdaptedPdfNumPages(null);
     };
-  }, [type, id, fileData.title]);
+  }, [type, id, adaptedPdfDiskName]);
 
   useEffect(() => {
     if (type !== 'adapted') return;
@@ -1069,6 +1146,12 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         setFileData({...data,
           shared: data.shared ? 1 : 0
         });
+
+        if (type === 'created') {
+          setCreatedPdfDiskName((data?.title || '').toString());
+        } else if (type === 'adapted') {
+          setAdaptedPdfDiskName((data?.title || '').toString());
+        }
         setIsDirtyLocal(false);
 
     } catch (error) {
@@ -1087,6 +1170,10 @@ const PreviewPage = ({ type: typeProp } = {}) => {
 
   const handleSave = async () => {
   try {
+    if ((type === 'created' || type === 'adapted') && !canSave) {
+      alert('Compila Titolo, Materia e Classe prima di salvare.');
+      return;
+    }
     const sharedValue = fileData.shared ? 1 : 0;
     const description = fileData.description || ' '; 
     
@@ -1203,6 +1290,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         });
         formData.append('file', pdfFile);
         formData.append('fileName', safeFileName);
+        formData.append('idPdf', String(existingWorkId));
 
         // INVIA SEMPRE il vecchio nome originale dal DB (non sanificato)
         // Il server si occuperà di normalizzarlo e trovare il file corrispondente
@@ -1257,6 +1345,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       });
       formData.append('file', pdfFile);
       formData.append('fileName', safeFileName);
+      formData.append('idPdf', String(newCreated.id_pdf));
 
       const saveResponse = await fetch('http://localhost:3001/api/pdf/save-file', {
         method: 'POST',
@@ -1435,6 +1524,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
 
               {!createdPdfError && createdPdfUrl && (
                 <Document
+                  key={`created:${createdPdfUrl}`}
                   file={createdPdfUrl}
                   loading={<div className="preview-pdf-loading">Loading PDF…</div>}
                   error={(
@@ -1490,6 +1580,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
 
               {!createdPdfError && createdPdfUrl && (
                 <Document
+                  key={`created:${createdPdfUrl}`}
                   file={createdPdfUrl}
                   loading={<div className="preview-pdf-loading">Loading PDF…</div>}
                   error={(
@@ -1549,6 +1640,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
 
               {!adaptedPdfError && adaptedPdfUrl && (
                 <Document
+                  key={`adapted:${adaptedPdfUrl}`}
                   file={adaptedPdfUrl}
                   loading={<div className="preview-pdf-loading">Loading PDF…</div>}
                   error={(
@@ -1600,8 +1692,13 @@ const PreviewPage = ({ type: typeProp } = {}) => {
                 </div>
               )}
 
-              {!sharedPdfError && (
+              {!sharedPdfError && !pdfSrc && (
+                <div className="preview-pdf-loading">Loading PDF…</div>
+              )}
+
+              {!sharedPdfError && pdfSrc && (
                 <Document
+                  key={`shared:${pdfSrc}`}
                   file={pdfSrc}
                   loading={<div className="preview-pdf-loading">Loading PDF…</div>}
                   error={(
@@ -1760,7 +1857,12 @@ const PreviewPage = ({ type: typeProp } = {}) => {
             <button className="preview-button download" onClick={handleDownload}>
               Download
             </button>
-            <button className="preview-button save" onClick={handleSave}>
+            <button
+              className="preview-button save"
+              onClick={handleSave}
+              disabled={!canSave}
+              title={!canSave ? 'Compila Titolo, Materia e Classe per salvare' : ''}
+            >
               Save
             </button>
             <button className="preview-button delete" onClick={handleDelete}>
@@ -1845,7 +1947,12 @@ const PreviewPage = ({ type: typeProp } = {}) => {
             <button className="preview-button download" onClick={handleDownload}>
               Download
             </button>
-            <button className="preview-button save" onClick={handleSave}>
+            <button
+              className="preview-button save"
+              onClick={handleSave}
+              disabled={!canSave}
+              title={!canSave ? 'Compila Titolo, Materia e Classe per salvare' : ''}
+            >
               Save
             </button>
             <button className="preview-button delete" onClick={handleDelete}>

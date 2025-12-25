@@ -5,6 +5,7 @@ import {
   getAllMyWorks,
   createPDF,
   updateInfo,
+  updateMyWorkName,
   deleteMyWork,
   getAllSharedWorks,
   getSharedWorkById,
@@ -74,6 +75,45 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+const sanitizePdfBaseName = (value) => {
+  const raw = (value ?? '').toString();
+  const base = raw.replace(/\.pdf$/i, '');
+  const safe = base
+    .replace(/[^a-zA-Z0-9\s-_]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .trim();
+  return safe || 'document';
+};
+
+const normalizeName = (name) => {
+  return (name || '')
+    .toString()
+    .replace(/\.pdf$/i, '')
+    .replace(/[_\s]/g, '')
+    .toLowerCase();
+};
+
+const pickUniquePdfFileName = (pdfDir, desiredFileName, { allowOverwriteNormalized } = {}) => {
+  const desired = (desiredFileName || '').toString();
+  const base = desired.replace(/\.pdf$/i, '').trim() || 'document';
+  const desiredNorm = normalizeName(base);
+
+  const exists = (fileName) => fs.existsSync(path.join(pdfDir, fileName));
+  const allowOverwrite = allowOverwriteNormalized && normalizeName(allowOverwriteNormalized) === desiredNorm;
+
+  const first = `${base}.pdf`;
+  if (!exists(first) || allowOverwrite) return first;
+
+  for (let i = 2; i < 1000; i += 1) {
+    const candidate = `${base}_${i}.pdf`;
+    if (!exists(candidate)) return candidate;
+  }
+  // Fallback (extremely unlikely)
+  const stamp = Date.now();
+  return `${base}_${stamp}.pdf`;
+};
 
 // Basic word list to bold. You can pass a custom list from the client.
 const DEFAULT_BOLD_WORDS = ['importante', 'definizione', 'esercizio', 'attenzione', 'nota'];
@@ -233,7 +273,58 @@ app.put('/api/myworks/:id/edit', [
     if(!oldPdf || oldPdf.error){
       return res.status(404).json({error: 'Compito non trovato'});
     }
-    const result = await updateInfo(id, NamePDF, Description, Subject, Grade, sharedValue);    
+    // Rename physical file in /public/myworks when the title changes.
+    // This keeps the file system consistent with the DB record.
+    const myworksDir = path.resolve(__dirname, '../client/public/myworks');
+    const legacyMyworkDir = path.resolve(__dirname, '../client/public/mywork');
+    const legacyPdfDir = path.resolve(__dirname, '../client/public/pdf');
+
+    if (!fs.existsSync(myworksDir)) {
+      fs.mkdirSync(myworksDir, { recursive: true });
+    }
+
+    const oldBase = sanitizePdfBaseName(oldPdf.NamePDF);
+    const newBaseRequested = sanitizePdfBaseName(NamePDF);
+
+    let finalBaseForDb = newBaseRequested;
+
+    // If the name changes, try renaming the physical file.
+    if (normalizeName(oldBase) !== normalizeName(newBaseRequested)) {
+      try {
+        const dirsToSearch = [myworksDir, legacyMyworkDir, legacyPdfDir].filter((d) => fs.existsSync(d));
+        let found = null;
+
+        for (const dir of dirsToSearch) {
+          const files = fs.readdirSync(dir);
+          const matchingOld = files.find((file) => normalizeName(file) === normalizeName(oldBase));
+          if (matchingOld) {
+            found = { dir, file: matchingOld };
+            break;
+          }
+        }
+
+        if (found) {
+          const desiredFileName = `${newBaseRequested}.pdf`;
+          const finalFileName = pickUniquePdfFileName(myworksDir, desiredFileName);
+          const fromPath = path.join(found.dir, found.file);
+          const toPath = path.join(myworksDir, finalFileName);
+          fs.renameSync(fromPath, toPath);
+          finalBaseForDb = finalFileName.replace(/\.pdf$/i, '');
+        }
+      } catch {
+        // If rename fails, keep going; DB update will still happen.
+      }
+    }
+
+    const result = await updateInfo(id, finalBaseForDb, Description, Subject, Grade, sharedValue);
+    // Ensure DB is aligned even if the rename logic had to pick a unique suffix.
+    if (finalBaseForDb && finalBaseForDb !== NamePDF) {
+      try {
+        await updateMyWorkName(id, finalBaseForDb);
+      } catch {
+        // ignore
+      }
+    }
 
     if (result) {
       res.json(result);
@@ -261,32 +352,21 @@ app.delete('/api/myworks/:id/delete', async (req, res) => {
     
     // Cancella il file PDF fisico
     try {
-      const pdfDir = path.resolve(__dirname, '../client/public/pdf');
-      
-      // Funzione per normalizzare il nome (rimuove spazi e underscore)
-      const normalizeName = (name) => {
-        return (name || '')
-          .toString()
-          .replace(/\.pdf$/i, '')
-          .replace(/[_\s]/g, '')  // Rimuove underscore e spazi
-          .toLowerCase();
-      };
-      
+      const myworksDir = path.resolve(__dirname, '../client/public/myworks');
+      const legacyMyworkDir = path.resolve(__dirname, '../client/public/mywork');
+      const legacyPdfDir = path.resolve(__dirname, '../client/public/pdf');
+
       const normalizedDbName = normalizeName(oldPdf.NamePDF);
-      
-      // Leggi tutti i file nella cartella PDF
-      const files = fs.readdirSync(pdfDir);
-      
-      // Trova il file che corrisponde al nome normalizzato
-      const matchingFile = files.find(file => {
-        const normalizedFileName = normalizeName(file);
-        return normalizedFileName === normalizedDbName;
-      });
-      
-      if (matchingFile) {
-        const filePath = path.join(pdfDir, matchingFile);
-        fs.unlinkSync(filePath);
-      } else {
+      const dirsToSearch = [myworksDir, legacyMyworkDir, legacyPdfDir].filter((d) => fs.existsSync(d));
+
+      for (const dir of dirsToSearch) {
+        const files = fs.readdirSync(dir);
+        const matchingFile = files.find((file) => normalizeName(file) === normalizedDbName);
+        if (matchingFile) {
+          const filePath = path.join(dir, matchingFile);
+          fs.unlinkSync(filePath);
+          break;
+        }
       }
     } catch (fileError) {
       console.error('Error deleting PDF file:', fileError);
@@ -728,19 +808,14 @@ app.post('/api/pdf/save', upload.single('file'), [
 
     const { NamePDF, Subject, Grade, Tag, Description, Shared, Type } = req.body;
     
-    // Salva il file PDF nella cartella public/pdf
-    const pdfDir = path.resolve(__dirname, '../client/public/pdf');
+    // Salva il file PDF nella cartella public/myworks
+    const pdfDir = path.resolve(__dirname, '../client/public/myworks');
     if (!fs.existsSync(pdfDir)) {
       fs.mkdirSync(pdfDir, { recursive: true });
     }
 
-    // Crea un nome file sicuro
-    const safeFileName = NamePDF
-      .replace(/[^a-zA-Z0-9\s-]/g, '')
-      .replace(/\s+/g, '_')
-      .replace(/_+/g, '_')
-      .trim() + '.pdf';
-    
+    const safeBaseName = sanitizePdfBaseName(NamePDF);
+    const safeFileName = pickUniquePdfFileName(pdfDir, `${safeBaseName}.pdf`);
     const filePath = path.join(pdfDir, safeFileName);
     
     // Scrivi il file sul disco
@@ -779,64 +854,66 @@ app.post('/api/pdf/save', upload.single('file'), [
 // POST /api/pdf/save-file - Salva SOLO il file PDF fisico (per created)
 app.post('/api/pdf/save-file', upload.single('file'), async (req, res) => {
   try {
-    const { fileName, oldFileName } = req.body;
+    const { fileName, oldFileName, idPdf } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ error: 'Missing PDF file' });
     }
     
-    // Salva il file PDF nella cartella public/pdf
-    const pdfDir = path.resolve(__dirname, '../client/public/pdf');
+    // Salva il file PDF nella cartella public/myworks
+    const pdfDir = path.resolve(__dirname, '../client/public/myworks');
     if (!fs.existsSync(pdfDir)) {
       fs.mkdirSync(pdfDir, { recursive: true });
     }
 
-    const safeFileName = fileName
-      .replace(/[^a-zA-Z0-9\s-]/g, '')
-      .replace(/\s+/g, '_')
-      .replace(/_+/g, '_')
-      .trim() + '.pdf';
+    const requestedBase = sanitizePdfBaseName(fileName);
+    const requestedFileName = `${requestedBase}.pdf`;
 
-    // Se esiste un vecchio file con nome diverso, eliminalo
-    if (oldFileName && oldFileName !== fileName) {
-      // Funzione per normalizzare il nome (rimuove spazi e underscore)
-      const normalizeName = (name) => {
-        return (name || '')
-          .toString()
-          .replace(/\.pdf$/i, '')
-          .replace(/[_\s]/g, '')  // Rimuove underscore e spazi
-          .toLowerCase();
-      };
-      
+    let allowOverwriteNormalized = undefined;
+
+    // If this is an update (oldFileName provided), allow overwriting the same underlying file.
+    if (oldFileName) {
+      allowOverwriteNormalized = oldFileName;
+
       const normalizedOldName = normalizeName(oldFileName);
-      const normalizedNewName = normalizeName(fileName);
-      
-      // Solo se i nomi NORMALIZZATI sono diversi, cerca ed elimina il vecchio file
-      if (normalizedOldName !== normalizedNewName) {
-        // Leggi tutti i file nella cartella PDF
+      const normalizedNewName = normalizeName(requestedBase);
+
+      // If user is changing the name, delete the old file (if present) to avoid orphan files.
+      if (normalizedOldName && normalizedOldName !== normalizedNewName) {
         const files = fs.readdirSync(pdfDir);
-        
-        // Trova il file che corrisponde al nome normalizzato
-        const matchingFile = files.find(file => {
-          const normalizedFileName = normalizeName(file);
-          return normalizedFileName === normalizedOldName;
-        });
-        
+        const matchingFile = files.find((file) => normalizeName(file) === normalizedOldName);
         if (matchingFile) {
           const oldFilePath = path.join(pdfDir, matchingFile);
-          fs.unlinkSync(oldFilePath);
-        } 
+          try {
+            fs.unlinkSync(oldFilePath);
+          } catch {
+            // ignore
+          }
+        }
       }
     }
-    
-    const filePath = path.join(pdfDir, safeFileName);
+
+    const finalFileName = pickUniquePdfFileName(pdfDir, requestedFileName, { allowOverwriteNormalized });
+    const filePath = path.join(pdfDir, finalFileName);
     
     // Scrivi il file sul disco
     fs.writeFileSync(filePath, req.file.buffer);
+
+    // Keep DB consistent when we had to adjust the filename to avoid collisions.
+    const parsedId = Number(idPdf);
+    const finalBaseName = finalFileName.replace(/\.pdf$/i, '');
+    if (Number.isFinite(parsedId) && parsedId > 0) {
+      try {
+        await updateMyWorkName(parsedId, finalBaseName);
+      } catch {
+        // ignore DB update errors; file is still saved
+      }
+    }
     
     res.status(200).json({ 
       message: 'PDF file saved successfully',
-      fileName: safeFileName 
+      fileName: finalFileName,
+      baseName: finalBaseName
     });
 
   } catch (error) {
