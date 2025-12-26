@@ -5,6 +5,7 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import '../styles/PreviewPage.css';
 import API from '../API/API.mjs';
 import { useUnsavedChanges } from '../contexts/UnsavedChangesContext.jsx';
+import { clearCreatedDraft, loadCreatedDraft, updateCreatedDraft } from '../utils/createdDraftStorage.js';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
@@ -30,7 +31,15 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   const { setIsDirty, clearDirty } = useUnsavedChanges();
   const type = typeProp ?? typeParam;
 
-  const draftWork = location.state?.work ?? null;
+  const draftWorkFromNav = location.state?.work ?? null;
+  const draftWorkFromStorage = useMemo(() => {
+    if (type !== 'created') return null;
+    if (id !== undefined && id !== null) return null;
+    if (draftWorkFromNav) return null;
+    return loadCreatedDraft()?.work ?? null;
+  }, [type, id, draftWorkFromNav]);
+
+  const draftWork = draftWorkFromNav ?? draftWorkFromStorage;
   const isDraftCreatedPreview = type === 'created' && (id === undefined || id === null) && !!draftWork;
   
   const [fileData, setFileData] = useState({
@@ -41,6 +50,61 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     description: '',
     shared: 0
   });
+
+  useEffect(() => {
+    if (!isDraftCreatedPreview) return;
+
+    // Ensure we persist the draft content so browser back/forward keeps it.
+    updateCreatedDraft({
+      work: {
+        id: draftWork?.id ?? null,
+        dsaTypes: Array.isArray(draftWork?.dsaTypes) ? draftWork.dsaTypes : [],
+        questions: Array.isArray(draftWork?.questions) ? draftWork.questions : [],
+        paragraphs: Array.isArray(draftWork?.paragraphs) ? draftWork.paragraphs : [],
+      },
+    });
+  }, [isDraftCreatedPreview, draftWork]);
+
+  useEffect(() => {
+    if (!isDraftCreatedPreview) return;
+
+    const stored = loadCreatedDraft()?.work ?? null;
+    if (!stored) return;
+
+    // Prefill metadata from stored draft (useful after browser back/forward).
+    setFileData((prev) => ({
+      ...prev,
+      title: prev.title || stored.title || '',
+      subject: prev.subject || stored.subject || '',
+      grade: Number(prev.grade) || Number(stored.grade) || 0,
+      tag: prev.tag || stored.tag || '',
+      description: prev.description || stored.description || '',
+      shared: prev.shared || (stored.shared ? 1 : 0),
+    }));
+  }, [isDraftCreatedPreview]);
+
+  useEffect(() => {
+    if (!isDraftCreatedPreview) return;
+
+    updateCreatedDraft({
+      work: {
+        title: fileData.title,
+        subject: fileData.subject,
+        grade: fileData.grade,
+        tag: fileData.tag,
+        description: fileData.description,
+        shared: !!fileData.shared,
+      },
+    });
+  }, [
+    isDraftCreatedPreview,
+    fileData.title,
+    fileData.subject,
+    fileData.grade,
+    fileData.tag,
+    fileData.description,
+    fileData.shared,
+  ]);
 
   const [isShared, setIsShared] = useState(false);
   const [isBackConfirmOpen, setIsBackConfirmOpen] = useState(false);
@@ -1179,6 +1243,10 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     
     if (isDraftCreatedPreview) {
       // CREATED - Salva PDF generato dal frontend
+      if (!draftWork) {
+        alert('Bozza non trovata. Torna a /create e riprova.');
+        return;
+      }
       if (!createdPdfUrl) {
         alert('PDF not generated yet.');
         return;
@@ -1361,6 +1429,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     }
     setIsDirtyLocal(false);
     clearDirty();
+    clearCreatedDraft();
     navigate('/');
 
     } else if (type === 'adapted' && id === 'new') {

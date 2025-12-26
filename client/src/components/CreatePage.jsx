@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Save, FileText, HelpCircle, Trash2 } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 import { useUnsavedChanges } from '../contexts/UnsavedChangesContext.jsx';
+import { loadCreatedDraft, updateCreatedDraft } from '../utils/createdDraftStorage.js';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import '../styles/CreatePage.css';
@@ -239,7 +240,9 @@ function CreatePage() {
 
   useEffect(() => {
     if (didPrefillFromState.current) return;
-    const work = location.state?.work;
+    const workFromNav = location.state?.work;
+    const workFromDraft = loadCreatedDraft()?.work ?? null;
+    const work = workFromNav ?? workFromDraft;
     if (!work) return;
 
     didPrefillFromState.current = true;
@@ -257,6 +260,46 @@ function CreatePage() {
 
     baselineRef.current = snapshotWork(work);
   }, [location.state]);
+
+  useEffect(() => {
+    // Keep a draft in sessionStorage so browser back/forward won't lose progress.
+    const stored = loadCreatedDraft();
+    const storedWork = stored?.work ?? {};
+
+    updateCreatedDraft({
+      work: {
+        id: location.state?.work?.id ?? storedWork.id ?? null,
+        dsaTypes: selectedDsaTypes,
+        questions,
+        paragraphs,
+        title: storedWork.title ?? '',
+        subject: storedWork.subject ?? '',
+        grade: storedWork.grade ?? 0,
+        tag: storedWork.tag ?? '',
+        description: storedWork.description ?? '',
+        shared: storedWork.shared ?? false,
+      },
+      ui: {
+        selectedType,
+        draftText,
+        draftParagraphHtml,
+        editingId,
+        draftQuestionType,
+        draftAnswers,
+      },
+    });
+  }, [
+    location.state,
+    selectedDsaTypes,
+    questions,
+    paragraphs,
+    selectedType,
+    draftText,
+    draftParagraphHtml,
+    editingId,
+    draftQuestionType,
+    draftAnswers,
+  ]);
 
   const stripHtmlToText = (html) =>
     (html || '')
@@ -316,18 +359,21 @@ function CreatePage() {
   };
 
   const handlePreviewAssignment = () => {
+    const storedDraft = loadCreatedDraft();
+    const storedWork = storedDraft?.work ?? {};
     navigate('/create/preview', {
       state: {
         work: {
-          id: location.state?.work?.id || null,
+          id: location.state?.work?.id || storedWork.id || null,
           dsaTypes: selectedDsaTypes,
           questions,
           paragraphs,
-          title: location.state?.work?.title || '',
-          subject: location.state?.work?.subject || '',
-          grade: location.state?.work?.grade || 0,
-          description: location.state?.work?.description || '',
-          shared: location.state?.work?.shared || false,
+          title: storedWork.title || location.state?.work?.title || '',
+          subject: storedWork.subject || location.state?.work?.subject || '',
+          grade: storedWork.grade || location.state?.work?.grade || 0,
+          tag: storedWork.tag || location.state?.work?.tag || '',
+          description: storedWork.description || location.state?.work?.description || '',
+          shared: storedWork.shared || location.state?.work?.shared || false,
         },
         workId: location.state?.work?.id || location.state?.workId || null,
       },
