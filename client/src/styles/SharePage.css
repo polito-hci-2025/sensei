@@ -1,0 +1,238 @@
+/* SharedPage.css - Stile Coerente Sensei */
+
+.share-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  /* Lo stesso sfondo "Sensei" usato nelle altre pagine */
+  background: radial-gradient(ellipse at top left, #f8fafc, #f3f0ff, #fce7f3);
+  overflow: hidden;
+}
+
+/* --- HEADER --- */
+.share-header {
+  height: 4.5rem; /* Altezza standard navbar */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  background-color: rgba(255, 255, 255, 0.5); /* Effetto vetro */
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.share-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Bottone Indietro (Freccia) */
+.share-back-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%; /* Cerchio */
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.share-back-btn:hover {
+  background-color: #f8fafc;
+  color: #1f2937;
+  transform: translateX(-2px);
+}
+
+.share-header-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.share-header-right {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Bottoni Azione (Download/Share) */
+.share-action-btn, .share-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px; /* Pillola */
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.share-action-btn {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  color: #4b5563;
+}
+.share-action-btn:hover { background-color: #f9fafb; }
+.share-action-btn.success { color: #16a34a; border-color: #16a34a; }
+
+.share-download-btn {
+  background-color: #7c3aed; /* Viola Sensei */
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2);
+}
+.share-download-btn:hover {
+  background-color: #6d28d9;
+  transform: translateY(-1px);
+}
+
+/* --- LAYOUT CONTENUTO --- */
+.share-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden; /* Blocca scroll pagina intera */
+}
+
+/* Sinistra: PDF Viewer */
+.share-pdf-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  /* Sfondo leggermente scuro per far risaltare il foglio */
+  background-color: rgba(241, 245, 249, 0.5); 
+}
+
+.share-pdf-wrapper {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.share-pdf-page {
+  margin-bottom: 1.5rem;
+}
+.share-pdf-page canvas {
+  border-radius: 0.5rem;
+}
+
+/* Destra: Sidebar Dettagli */
+.share-info-sidebar {
+  width: 22rem;
+  background-color: white;
+  border-left: 1px solid #e2e8f0;
+  padding: 2rem;
+  overflow-y: auto;
+  box-shadow: -4px 0 15px rgba(0,0,0,0.02);
+}
+
+.share-info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.share-icon-wrapper {
+  width: 4rem;
+  height: 4rem;
+  background-color: #f3e8ff;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c3aed;
+  margin-bottom: 0.5rem;
+}
+
+.share-work-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.share-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 1.5rem 0;
+}
+
+.share-meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.share-meta-item .label { color: #6b7280; }
+.share-meta-item .value { color: #1f2937; font-weight: 600; }
+
+.flex-center { display: flex; align-items: center; }
+
+.share-description-box h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+.share-description-box p {
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.share-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.share-tag-badge {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Loading & Error */
+.share-loading, .share-error {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at top left, #f8fafc, #f3f0ff, #fce7f3);
+  color: #6b7280;
+}
+
+.share-spinner {
+  animation: spin 1s linear infinite;
+  color: #7c3aed;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .share-content { flex-direction: column; overflow-y: auto; }
+  .share-pdf-section { overflow: visible; padding: 1rem; }
+  .share-info-sidebar { width: 100%; border-left: none; border-top: 1px solid #e2e8f0; height: auto; }
+}

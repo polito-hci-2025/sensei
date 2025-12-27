@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import API from '../API/API.mjs';
 import ConfirmDialog from './ConfirmDialog';
 import '../styles/HomePage.css';
@@ -434,13 +435,13 @@ function HomePage() {
             ADAPT
           </button>
           <button 
-            onClick={() => navigate('/shared')}
+            onClick={() => navigate('/shared-library')} 
             className="homepage-action-button shared"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5"/>
             </svg>
-            SHARED
+            SHARED 
           </button>
         </div>
       </div>

@@ -185,6 +185,18 @@ const getAllShared = async () => {
         throw new Error("Internal server error");
 }
 
+const getAllSharedWorks = async () => {
+    // Chiama l'endpoint del server che hai già configurato in index.mjs
+    const response = await fetch(SERVER_URL + '/api/sharedworks');
+    if (response.ok) {
+        const works = await response.json();
+        // Normalizza i dati per evitare problemi con maiuscole/minuscole (NamePDF vs title)
+        return works.map(normalizeSharedWork);
+    } else {
+        throw new Error('Errore durante il recupero della libreria condivisa');
+    }
+};
+
 //get shared work by id
 //GET /api/sharedworks/:id_sharedwork
 const getSharedWorkById = async (id) => {
@@ -430,6 +442,20 @@ const savePdf = async (pdfBlob, metadata, type) => {
     return await response.json();
 };
 
+const incrementDownload = async (id) => {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/sharedworks/${id}/download`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) throw new Error('Errore aggiornamento download');
+        return true;
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+};
+
 const API = {
     getMyWorkById,
     getAllMyWorks,
@@ -446,6 +472,8 @@ const API = {
     deleteAllContentPDF,
     deleteContentPDF,
     generateAdaptedPdf,
-    savePdf
+    savePdf,
+    getAllSharedWorks,
+    incrementDownload
 };
 export default API;
