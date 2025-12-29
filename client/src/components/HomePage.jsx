@@ -479,9 +479,56 @@ function HomePage() {
               type="button"
               className="homepage-work-menu-item"
               role="menuitem"
-              onClick={() => {
-                // Prototype: no-op for now
+              onClick={async () => {
                 closeWorkMenu();
+                if (!openWork) return;
+
+                const rawTitle = (openWork.title || '').toString().trim();
+                const base = rawTitle.replace(/\.pdf$/i, '').trim();
+                const candidates = [];
+                if (base) {
+                  candidates.push(`/myworks/${encodeURIComponent(base + '.pdf')}`);
+                  candidates.push(`/myworks/${encodeURIComponent(base.replace(/\s+/g, '_') + '.pdf')}`);
+                  candidates.push(`/myworks/${encodeURIComponent(base.replace(/_/g, ' ') + '.pdf')}`);
+                }
+                candidates.push(`/myworks/1_Anomaly_Segmentation.pdf`);
+
+                const exists = async (url) => {
+                  try {
+                    const res = await fetch(url, { method: 'HEAD' });
+                    return res.ok;
+                  } catch {
+                    return false;
+                  }
+                };
+
+                try {
+                  let found = null;
+                  for (const url of candidates) {
+                    // try head first
+                    // eslint-disable-next-line no-await-in-loop
+                    if (await exists(url)) {
+                      found = url;
+                      break;
+                    }
+                  }
+
+                  if (!found) {
+                    setMyWorksError('File not found for download');
+                    return;
+                  }
+
+                  const a = document.createElement('a');
+                  a.href = found;
+                  a.download = '';
+                  a.rel = 'noreferrer';
+                  a.style.display = 'none';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                } catch (err) {
+                  setMyWorksError(err?.message ?? String(err));
+                }
               }}
             >
               Download
@@ -509,10 +556,12 @@ function HomePage() {
                 const nextShared = openWork.shared ? 0 : 1;
 
                 try {
+                  // Ensure Description is present (server validates it as mandatory)
+                  const safeDescription = (openWork.description || ' ').toString();
                   await API.updateInfo(
                     openWork.id,
                     openWork.title,
-                    openWork.description,
+                    safeDescription,
                     openWork.subject,
                     openWork.grade,
                     nextShared

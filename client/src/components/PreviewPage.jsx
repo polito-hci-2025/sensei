@@ -108,7 +108,22 @@ const PreviewPage = ({ type: typeProp } = {}) => {
 
   const [isShared, setIsShared] = useState(false);
   const [isBackConfirmOpen, setIsBackConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDirtyLocal, setIsDirtyLocal] = useState(false);
+
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveDialogTitle, setSaveDialogTitle] = useState('');
+  const [saveDialogMessage, setSaveDialogMessage] = useState('');
+  const [saveDialogOnConfirm, setSaveDialogOnConfirm] = useState(null);
+
+  const showSaveDialog = (title, message, onConfirm) => {
+    setSaveDialogTitle(title ?? '');
+    setSaveDialogMessage(message ?? '');
+    setSaveDialogOnConfirm(() => onConfirm ?? (() => setSaveDialogOpen(false)));
+    setSaveDialogOpen(true);
+  };
+
+  
 
   const [createdPdfUrl, setCreatedPdfUrl] = useState('');
   const [createdPdfNumPages, setCreatedPdfNumPages] = useState(null);
@@ -1235,7 +1250,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   const handleSave = async () => {
   try {
     if ((type === 'created' || type === 'adapted') && !canSave) {
-      alert('Compila Titolo, Materia e Classe prima di salvare.');
+      showSaveDialog('Missing fields', 'Please fill Title, Subject and Grade before saving.', () => setSaveDialogOpen(false));
       return;
     }
     const sharedValue = fileData.shared ? 1 : 0;
@@ -1244,11 +1259,11 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     if (isDraftCreatedPreview) {
       // CREATED - Salva PDF generato dal frontend
       if (!draftWork) {
-        alert('Bozza non trovata. Torna a /create e riprova.');
+        showSaveDialog('Draft not found', 'Draft not found. Return to /create and try again.', () => setSaveDialogOpen(false));
         return;
       }
       if (!createdPdfUrl) {
-        alert('PDF not generated yet.');
+        showSaveDialog('PDF not generated', 'PDF not generated yet. Please generate the PDF first.', () => setSaveDialogOpen(false));
         return;
       }
 
@@ -1374,7 +1389,15 @@ const PreviewPage = ({ type: typeProp } = {}) => {
           throw new Error('Failed to save PDF file');
         }
 
-        alert('Created PDF updated successfully!');
+        showSaveDialog('Saved', 'Assignment updated — your PDF and contents were saved.', async () => {
+          setIsDirtyLocal(false);
+          clearDirty();
+          try {
+            clearCreatedDraft();
+          } catch {}
+          setSaveDialogOpen(false);
+          navigate('/');
+        });
       } else {
 
       // Crea il record nel database con il nome file SANIFICATO
@@ -1424,8 +1447,16 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       if (!saveResponse.ok) {
         throw new Error('Failed to save PDF file');
       }
-    
-      alert('Created PDF saved successfully!');
+
+      showSaveDialog('Saved', 'Assignment created and saved successfully!', async () => {
+        setIsDirtyLocal(false);
+        clearDirty();
+        try {
+          clearCreatedDraft();
+        } catch {}
+        setSaveDialogOpen(false);
+        navigate('/');
+      });
     }
     setIsDirtyLocal(false);
     clearDirty();
@@ -1435,7 +1466,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     } else if (type === 'adapted' && id === 'new') {
       const blobUrl = sessionStorage.getItem('adaptedPdfUrl');
       if (!blobUrl) {
-        alert('PDF not found. Please regenerate it.');
+        showSaveDialog('PDF not found', 'PDF not found. Please regenerate it.', () => setSaveDialogOpen(false));
         return;
       }
 
@@ -1454,10 +1485,12 @@ const PreviewPage = ({ type: typeProp } = {}) => {
       sessionStorage.removeItem('adaptedPdfUrl');
       sessionStorage.removeItem('adaptedPdfData');
 
-      alert('Adapted PDF saved successfully!');
-      setIsDirtyLocal(false);
-      clearDirty();
-      navigate('/');
+      showSaveDialog('Saved', 'Adapted PDF saved successfully!', async () => {
+        setIsDirtyLocal(false);
+        clearDirty();
+        setSaveDialogOpen(false);
+        navigate('/');
+      });
 
     } else {
       await API.updateInfo(
@@ -1468,13 +1501,15 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         fileData.grade, 
         sharedValue
       );
-      alert('Modifiche salvate con successo!');
-      setIsDirtyLocal(false);
-      clearDirty();
-      navigate('/');
+      showSaveDialog('Saved', 'Changes saved successfully!', async () => {
+        setIsDirtyLocal(false);
+        clearDirty();
+        setSaveDialogOpen(false);
+        navigate('/');
+      });
     }
   } catch (error) {
-    alert(`Error: ${error.message}`);
+    showSaveDialog('Error', `Error: ${error.message}`, () => setSaveDialogOpen(false));
     console.error('Save error:', error);
   }
 };
@@ -1556,13 +1591,8 @@ const PreviewPage = ({ type: typeProp } = {}) => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Sei sicuro di voler eliminare questo file?')) {
-      try {
-        await API.deleteMyWork(id);
-        navigate('/');
-      } catch (error) {
-      }
-    }
+    // Open the confirm dialog; the actual deletion is handled in onConfirm below.
+    setIsDeleteConfirmOpen(true);
   };
 
   const handleBack = () => {
@@ -2033,10 +2063,24 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     }
   };
 
-  return (
-    <div className="preview-main-wrapper">
+    return (
+      <div className="preview-main-wrapper">
 
     <div className="preview-container">
+      <ConfirmDialog
+        open={saveDialogOpen}
+        title={saveDialogTitle}
+        message={saveDialogMessage}
+        confirmText="OK"
+        onConfirm={() => {
+          try {
+            saveDialogOnConfirm?.();
+          } catch (err) {
+            // ignore
+          }
+          setSaveDialogOpen(false);
+        }}
+      />
         <ConfirmDialog
             open={isBackConfirmOpen}
             title="Leave page?"
@@ -2063,6 +2107,36 @@ const PreviewPage = ({ type: typeProp } = {}) => {
         <div className="preview-header-right">
         </div>
       </header>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title={isDraftCreatedPreview ? 'Delete unsaved data?' : 'Delete file?'}
+        message={isDraftCreatedPreview ? 'Are you sure you want to delete all unsaved data?' : 'Are you sure you want to delete this file? This action is irreversible.'}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={async () => {
+          setIsDeleteConfirmOpen(false);
+          try {
+            if (isDraftCreatedPreview) {
+              try {
+                clearCreatedDraft();
+              } catch {
+                // ignore
+              }
+              clearDirty();
+              navigate('/');
+              return;
+            }
+
+            await API.deleteMyWork(id);
+            navigate('/');
+          } catch (err) {
+            // ignore or show error
+            console.error('Delete error', err);
+          }
+        }}
+      />
 
 
             <div className="preview-main">
