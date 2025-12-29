@@ -230,7 +230,7 @@ function HomePage() {
       return;
     }
 
-    navigate(`/edit/${work.id}`, {
+    navigate(`/adapted/preview/${work.id}`, {
       state: {
         work: {
           id: work.id,
