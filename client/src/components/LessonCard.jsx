@@ -8,7 +8,7 @@ function LessonCard({ lesson, type }) {
 
   const handleView = () => {
     if (type === 'shared') {
-      navigate(`/shared/view/${lesson.id}`);
+      navigate(`/shared/preview/${lesson.id}`);
     } else {
       navigate(`/create/preview/${lesson.id}`);
     }

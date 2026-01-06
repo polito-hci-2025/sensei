@@ -214,7 +214,16 @@ function HomePage() {
       return;
     }
 
-    navigate(`/edit/${work.id}`);
+    navigate(`/edit/${work.id}`, {
+      state: {
+        work: {
+          id: work.id,
+          ...work,
+          dsaTypes: splitDsaTags(work.tag),
+        },
+        workId: work.id,
+      },
+    });
   };
 
   const splitDsaTags = (value) => {
