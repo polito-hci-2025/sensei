@@ -385,7 +385,7 @@ function HomePage() {
       <ConfirmDialog
         open={isDeleteConfirmOpen}
         title="Delete work?"
-        message={`Are you sure you want to delete “${deleteTargetWork?.title ?? ''}”?`}
+        message="Are you sure you want to delete the PDF?"
         confirmText="Delete"
         cancelText="Cancel"
         onCancel={() => {
