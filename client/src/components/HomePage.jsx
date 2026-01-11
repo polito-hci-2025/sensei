@@ -32,10 +32,26 @@ function HomePage() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteTargetWork, setDeleteTargetWork] = useState(null);
 
+  const [toast, setToast] = useState(null); //messaggio di successo per share/unshare
+
   const closeWorkMenu = () => {
     setOpenWorkMenuId(null);
     setWorkMenuPos(null);
   };
+
+  const showToast = (msg, ms = 3000) => {
+    setToast(String(msg));
+    window.clearTimeout(showToast._t);
+    showToast._t = window.setTimeout(() => setToast(null), ms);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    return () => {
+      cancelled = true;
+      window.clearTimeout(showToast._t);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -214,7 +230,7 @@ function HomePage() {
       return;
     }
 
-    navigate(`/edit/${work.id}`, {
+    navigate(`/adapted/preview/${work.id}`, {
       state: {
         work: {
           id: work.id,
@@ -381,209 +397,269 @@ function HomePage() {
   );
 
   return (
-    <div className="homepage-container">
-      <ConfirmDialog
-        open={isDeleteConfirmOpen}
-        title="Delete work?"
-        message="Are you sure you want to delete the PDF?"
-        confirmText="Delete"
-        cancelText="Cancel"
-        onCancel={() => {
-          setIsDeleteConfirmOpen(false);
-          setDeleteTargetWork(null);
-        }}
-        onConfirm={async () => {
-          setIsDeleteConfirmOpen(false);
-          if (!deleteTargetWork) return;
+    <>
+      {toast && (
+        <div className="center-toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      )}
+      <div className="homepage-container">
+        <ConfirmDialog
+          open={isDeleteConfirmOpen}
+          title="Delete work?"
+          message="Are you sure you want to delete the PDF?"
+          confirmText="Delete"
+          cancelText="Cancel"
+          onCancel={() => {
+            setIsDeleteConfirmOpen(false);
+            setDeleteTargetWork(null);
+          }}
+          onConfirm={async () => {
+            setIsDeleteConfirmOpen(false);
+            if (!deleteTargetWork) return;
 
-          const id = deleteTargetWork.id;
-          setDeleteTargetWork(null);
+            const id = deleteTargetWork.id;
+            setDeleteTargetWork(null);
 
-          try {
-            await API.deleteMyWork(id);
-            setMyWorks((prev) => prev.filter((w) => w.id !== id));
-          } catch (err) {
-            setMyWorksError(err?.message ?? String(err));
-          }
-        }}
-      />
-      {/* Sidebar */}
-      <div className="homepage-sidebar">
-        <div className="homepage-works-section">
-          <h2>My Works</h2>
-          
-          <div className="homepage-works-list" onScroll={closeWorkMenu}>
-            {isLoadingMyWorks && <div className="homepage-empty">Loading...</div>}
-            {!isLoadingMyWorks && myWorksError && <div className="homepage-empty">{myWorksError}</div>}
-            {!isLoadingMyWorks && !myWorksError && myWorks.length === 0 && (
-              <div className="homepage-empty">No works yet</div>
-            )}
-            {!isLoadingMyWorks && !myWorksError && myWorks.map((work) => (
-              <MyWorkCard key={work.id} work={work} />
-            ))}
+            try {
+              await API.deleteMyWork(id);
+              setMyWorks((prev) => prev.filter((w) => w.id !== id));
+            } catch (err) {
+              setMyWorksError(err?.message ?? String(err));
+            }
+          }}
+        />
+        {/* Sidebar */}
+        <div className="homepage-sidebar">
+          <div className="homepage-works-section">
+            <h2>My Works</h2>
+            
+            <div className="homepage-works-list" onScroll={closeWorkMenu}>
+              {isLoadingMyWorks && <div className="homepage-empty">Loading...</div>}
+              {!isLoadingMyWorks && myWorksError && <div className="homepage-empty">{myWorksError}</div>}
+              {!isLoadingMyWorks && !myWorksError && myWorks.length === 0 && (
+                <div className="homepage-empty">No works yet</div>
+              )}
+              {!isLoadingMyWorks && !myWorksError && myWorks.map((work) => (
+                <MyWorkCard key={work.id} work={work} />
+              ))}
+            </div>
+          </div>
+
+          <div className="homepage-action-buttons">
+            <button 
+              onClick={() => navigate('/create')}
+              className="homepage-action-button create"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+              </svg>
+              CREATE
+            </button>
+            <button 
+              onClick={() => navigate('/adapt')}
+              className="homepage-action-button adapt"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+              </svg>
+              ADAPT
+            </button>
+            <button 
+              onClick={() => navigate('/shared-library')} 
+              className="homepage-action-button shared"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5"/>
+              </svg>
+              SHARED 
+            </button>
           </div>
         </div>
 
-        <div className="homepage-action-buttons">
-          <button 
-            onClick={() => navigate('/create')}
-            className="homepage-action-button create"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-            </svg>
-            CREATE
-          </button>
-          <button 
-            onClick={() => navigate('/adapt')}
-            className="homepage-action-button adapt"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
-            </svg>
-            ADAPT
-          </button>
-          <button 
-            onClick={() => navigate('/shared-library')} 
-            className="homepage-action-button shared"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5"/>
-            </svg>
-            SHARED 
-          </button>
+        {openWork && workMenuPos &&
+          createPortal(
+            <div
+              className="homepage-work-menu"
+              role="menu"
+              aria-label="Work actions"
+              style={{ top: `${workMenuPos.top}px`, left: `${workMenuPos.left}px`, width: `${workMenuPos.width}px` }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="homepage-work-menu-item"
+                role="menuitem"
+                onClick={async () => {
+                  closeWorkMenu();
+                  await navigateToWorkEditor(openWork);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className="homepage-work-menu-item"
+                role="menuitem"
+                onClick={async () => {
+                  closeWorkMenu();
+                  if (!openWork) return;
+
+                  const rawTitle = (openWork.title || '').toString().trim();
+                  const base = rawTitle.replace(/\.pdf$/i, '').trim();
+                  const candidates = [];
+                  if (base) {
+                    candidates.push(`/myworks/${encodeURIComponent(base + '.pdf')}`);
+                    candidates.push(`/myworks/${encodeURIComponent(base.replace(/\s+/g, '_') + '.pdf')}`);
+                    candidates.push(`/myworks/${encodeURIComponent(base.replace(/_/g, ' ') + '.pdf')}`);
+                  }
+                  candidates.push(`/myworks/1_Anomaly_Segmentation.pdf`);
+
+                  const exists = async (url) => {
+                    try {
+                      const res = await fetch(url, { method: 'HEAD' });
+                      return res.ok;
+                    } catch {
+                      return false;
+                    }
+                  };
+
+                  try {
+                    let found = null;
+                    for (const url of candidates) {
+                      // try head first
+                      // eslint-disable-next-line no-await-in-loop
+                      if (await exists(url)) {
+                        found = url;
+                        break;
+                      }
+                    }
+
+                    if (!found) {
+                      setMyWorksError('File not found for download');
+                      return;
+                    }
+
+                    const a = document.createElement('a');
+                    a.href = found;
+                    a.download = '';
+                    a.rel = 'noreferrer';
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                  } catch (err) {
+                    setMyWorksError(err?.message ?? String(err));
+                  }
+                }}
+              >
+                Download
+              </button>
+              <button
+                type="button"
+                className="homepage-work-menu-item"
+                role="menuitem"
+                onClick={() => {
+                  closeWorkMenu();
+                  setDeleteTargetWork(openWork);
+                  setIsDeleteConfirmOpen(true);
+                }}
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                className="homepage-work-menu-item"
+                role="menuitem"
+                onClick={async () => {
+                  closeWorkMenu();
+                  if (!openWork) return;
+
+                  const nextShared = openWork.shared ? 0 : 1;
+
+                  try {
+                    // Ensure Description is present (server validates it as mandatory)
+                    const safeDescription = (openWork.description || ' ').toString();
+                    await API.updateInfo(
+                      openWork.id,
+                      openWork.title,
+                      safeDescription,
+                      openWork.subject,
+                      openWork.grade,
+                      nextShared
+                    );
+
+                    setMyWorks((prev) =>
+                      prev.map((w) =>
+                        w.id === openWork.id
+                          ? {
+                              ...w,
+                              shared: Boolean(nextShared),
+                            }
+                          : w
+                      )
+                    );
+
+                    // Refresh shared list to reflect DB changes.
+                    setIsLoadingSharedWorks(true);
+                    setSharedWorksError('');
+                    const refreshed = await API.getAllShared();
+                    setSharedWorks(refreshed);
+
+                    // show centered success toast
+                    showToast(nextShared ? 'Shared successfully' : 'Unshared successfully');
+
+                  } catch (err) {
+                    setMyWorksError(err?.message ?? String(err));
+                  } finally {
+                    setIsLoadingSharedWorks(false);
+                  }
+                }}
+              >
+                {openWork.shared ? 'Unshare' : 'Share'}
+              </button>
+            </div>,
+            document.body
+          )}
+
+        {/* Main Content */}
+        <div className="homepage-main-content">
+          {/* Most Downloaded */}
+          <section className="homepage-section">
+            <h2>Most downloaded</h2>
+            <div className="homepage-lessons-grid">
+              {isLoadingSharedWorks && <div className="homepage-empty">Loading...</div>}
+              {!isLoadingSharedWorks && sharedWorksError && (
+                <div className="homepage-empty">{sharedWorksError}</div>
+              )}
+              {!isLoadingSharedWorks && !sharedWorksError && mostDownloaded.length === 0 && (
+                <div className="homepage-empty">No shared works yet</div>
+              )}
+              {!isLoadingSharedWorks && !sharedWorksError && mostDownloaded.map((lesson) => (
+                <LessonCard key={lesson.id} lesson={lesson} />
+              ))}
+            </div>
+          </section>
+
+          {/* Recently Shared */}
+          <section className="homepage-section">
+            <h2>Recently shared</h2>
+            <div className="homepage-lessons-grid">
+              {isLoadingSharedWorks && <div className="homepage-empty">Loading...</div>}
+              {!isLoadingSharedWorks && sharedWorksError && (
+                <div className="homepage-empty">{sharedWorksError}</div>
+              )}
+              {!isLoadingSharedWorks && !sharedWorksError && recentlyShared.length === 0 && (
+                <div className="homepage-empty">No shared works yet</div>
+              )}
+              {!isLoadingSharedWorks && !sharedWorksError && recentlyShared.map((lesson) => (
+                <LessonCard key={lesson.id} lesson={lesson} />
+              ))}
+            </div>
+          </section>
         </div>
       </div>
-
-      {openWork && workMenuPos &&
-        createPortal(
-          <div
-            className="homepage-work-menu"
-            role="menu"
-            aria-label="Work actions"
-            style={{ top: `${workMenuPos.top}px`, left: `${workMenuPos.left}px`, width: `${workMenuPos.width}px` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="homepage-work-menu-item"
-              role="menuitem"
-              onClick={async () => {
-                closeWorkMenu();
-                await navigateToWorkEditor(openWork);
-              }}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              className="homepage-work-menu-item"
-              role="menuitem"
-              onClick={() => {
-                // Prototype: no-op for now
-                closeWorkMenu();
-              }}
-            >
-              Download
-            </button>
-            <button
-              type="button"
-              className="homepage-work-menu-item"
-              role="menuitem"
-              onClick={() => {
-                closeWorkMenu();
-                setDeleteTargetWork(openWork);
-                setIsDeleteConfirmOpen(true);
-              }}
-            >
-              Delete
-            </button>
-            <button
-              type="button"
-              className="homepage-work-menu-item"
-              role="menuitem"
-              onClick={async () => {
-                closeWorkMenu();
-                if (!openWork) return;
-
-                const nextShared = openWork.shared ? 0 : 1;
-
-                try {
-                  await API.updateInfo(
-                    openWork.id,
-                    openWork.title,
-                    openWork.description,
-                    openWork.subject,
-                    openWork.grade,
-                    nextShared
-                  );
-
-                  setMyWorks((prev) =>
-                    prev.map((w) =>
-                      w.id === openWork.id
-                        ? {
-                            ...w,
-                            shared: Boolean(nextShared),
-                          }
-                        : w
-                    )
-                  );
-
-                  // Refresh shared list to reflect DB changes.
-                  setIsLoadingSharedWorks(true);
-                  setSharedWorksError('');
-                  const refreshed = await API.getAllShared();
-                  setSharedWorks(refreshed);
-                } catch (err) {
-                  setMyWorksError(err?.message ?? String(err));
-                } finally {
-                  setIsLoadingSharedWorks(false);
-                }
-              }}
-            >
-              {openWork.shared ? 'Unshared' : 'Shared'}
-            </button>
-          </div>,
-          document.body
-        )}
-
-      {/* Main Content */}
-      <div className="homepage-main-content">
-        {/* Most Downloaded */}
-        <section className="homepage-section">
-          <h2>Most downloaded</h2>
-          <div className="homepage-lessons-grid">
-            {isLoadingSharedWorks && <div className="homepage-empty">Loading...</div>}
-            {!isLoadingSharedWorks && sharedWorksError && (
-              <div className="homepage-empty">{sharedWorksError}</div>
-            )}
-            {!isLoadingSharedWorks && !sharedWorksError && mostDownloaded.length === 0 && (
-              <div className="homepage-empty">No shared works yet</div>
-            )}
-            {!isLoadingSharedWorks && !sharedWorksError && mostDownloaded.map((lesson) => (
-              <LessonCard key={lesson.id} lesson={lesson} />
-            ))}
-          </div>
-        </section>
-
-        {/* Recently Shared */}
-        <section className="homepage-section">
-          <h2>Recently shared</h2>
-          <div className="homepage-lessons-grid">
-            {isLoadingSharedWorks && <div className="homepage-empty">Loading...</div>}
-            {!isLoadingSharedWorks && sharedWorksError && (
-              <div className="homepage-empty">{sharedWorksError}</div>
-            )}
-            {!isLoadingSharedWorks && !sharedWorksError && recentlyShared.length === 0 && (
-              <div className="homepage-empty">No shared works yet</div>
-            )}
-            {!isLoadingSharedWorks && !sharedWorksError && recentlyShared.map((lesson) => (
-              <LessonCard key={lesson.id} lesson={lesson} />
-            ))}
-          </div>
-        </section>
-      </div>
-    </div>
+    </>
   );
 }
 

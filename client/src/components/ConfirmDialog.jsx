@@ -44,18 +44,21 @@ function ConfirmDialog({
           {message}
         </p>
         <div className="sensei-confirm-actions">
-          <button
-            type="button"
-            className="sensei-confirm-btn secondary"
-            onClick={onCancel}
-            autoFocus
-          >
-            {cancelText}
-          </button>
+          {onCancel && (
+            <button
+              type="button"
+              className="sensei-confirm-btn secondary"
+              onClick={onCancel}
+              autoFocus
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             type="button"
             className="sensei-confirm-btn primary"
             onClick={onConfirm}
+            autoFocus={!onCancel}
           >
             {confirmText}
           </button>

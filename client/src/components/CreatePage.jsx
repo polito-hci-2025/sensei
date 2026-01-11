@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Save, FileText, HelpCircle, Trash2 } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 import { useUnsavedChanges } from '../contexts/UnsavedChangesContext.jsx';
-import { loadCreatedDraft, updateCreatedDraft } from '../utils/createdDraftStorage.js';
+import { loadCreatedDraft, updateCreatedDraft, clearCreatedDraft } from '../utils/createdDraftStorage.js';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import '../styles/CreatePage.css';
@@ -210,6 +210,7 @@ function CreatePage() {
   const dsaTypes = ['Dysgraphia', 'Dyslexia', 'Dyscalculia', 'Dysorthography'];
 
   const didPrefillFromState = useRef(false);
+  const preserveDraftRef = useRef(false);
 
   const snapshotWork = (workLike) => {
     const safe = workLike ?? {};
@@ -330,6 +331,18 @@ function CreatePage() {
   }, [hasUnsavedChanges, setIsDirty, clearDirty]);
 
   useEffect(() => {
+    return () => {
+      if (!preserveDraftRef.current) {
+        try {
+          clearCreatedDraft();
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (selectedType === 'paragraph') return;
 
     
@@ -359,6 +372,8 @@ function CreatePage() {
   };
 
   const handlePreviewAssignment = () => {
+    // Mark that we are intentionally navigating to the preview and want to keep the draft
+    preserveDraftRef.current = true;
     const storedDraft = loadCreatedDraft();
     const storedWork = storedDraft?.work ?? {};
     navigate('/create/preview', {

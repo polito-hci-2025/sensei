@@ -33,9 +33,7 @@ function App() {
           <Route path="/adapt" element={<AdaptPage />} />
 
           <Route path="/shared" element={<SharePage />} />
-          
-          <Route path="/edit/:id" element={<PreviewPage />} />
-                  
+                            
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
