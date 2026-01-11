@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, User, Download } from 'lucide-react';
+import { Download, User } from 'lucide-react';
 import '../styles/LessonCard.css';
 
 function LessonCard({ lesson, type }) {
@@ -24,58 +24,79 @@ function LessonCard({ lesson, type }) {
   };
 
   const displayTitle = formatTitle(lesson.title);
+  
+  // Tag DSA (prende il primo se ce ne sono multipli)
+  const dsaTag = lesson.tag ? lesson.tag.split(',')[0].trim() : 'General';
 
-  // --- LOGICA COLORI MATERIE ---
+  // --- LOGICA CLASSI CSS ---
   const getSubjectClass = (subject) => {
     if (!subject) return 'default';
     const s = subject.toLowerCase().trim();
-    
     if (s === 'history' || s === 'storia') return 'history';
     if (s === 'math' || s === 'matematica') return 'math';
     if (s === 'geography' || s === 'geografia') return 'geography';
     if (s === 'science' || s === 'scienze') return 'science';
     if (s === 'music' || s === 'musica') return 'music';
     if (s === 'english' || s === 'inglese') return 'english';
-    
     return 'default';
   };
-  // -----------------------------
+
+  const getDsaClass = (tag) => {
+    if (!tag) return 'default';
+    const t = tag.toLowerCase().trim();
+    if (t.includes('dyslexia') || t.includes('dislessia')) return 'dyslexia';
+    if (t.includes('dyscalculia') || t.includes('discalculia')) return 'dyscalculia';
+    if (t.includes('dysgraphia') || t.includes('disgrafia')) return 'dysgraphia';
+    if (t.includes('adhd')) return 'adhd';
+    return 'default';
+  };
+  // -------------------------
 
   return (
     <div className="lesson-card">
+      
+      {/* HEADER: DSA Tag + Download */}
       <div className="lesson-card-header">
-        <div className="lesson-icon-box">
-          <FileText size={24} className="lesson-icon-svg" />
-        </div>
-        
-        {/* Assegnazione classe dinamica */}
-        <span className={`lesson-badge ${getSubjectClass(lesson.subject)}`}>
-          {lesson.subject || 'Generale'}
+        <span className={`lesson-dsa-badge ${getDsaClass(dsaTag)}`}>
+          {dsaTag}
         </span>
+        
+        <div className="lesson-card-downloads">
+           <Download size={14} />
+           <span>{lesson.download || 0}</span>
+        </div>
       </div>
 
+      {/* BODY */}
       <div className="lesson-card-body">
+        {/* Titolo */}
         <h3 className="lesson-title" title={displayTitle}>
           {displayTitle}
         </h3>
-        <p className="lesson-subtitle">
-          Classe {lesson.grade} • {lesson.tag ? lesson.tag.split(',')[0] : 'Nessun tag'}
+        
+        {/* Descrizione (NUOVO) */}
+        <p className="lesson-description">
+          {lesson.description || 'No description available'}
         </p>
+
+        {/* Badge Materia e Classe */}
+        <div className="lesson-meta-tags">
+          <span className={`lesson-meta-badge subject ${getSubjectClass(lesson.subject)}`}>
+            {lesson.subject || 'Generale'}
+          </span>
+          <span className="lesson-meta-badge grade">
+            {lesson.grade ? lesson.grade : 'N/A'}
+          </span>
+        </div>
       </div>
 
+      {/* FOOTER */}
       <div className="lesson-card-footer">
         <div className="lesson-author">
-          <User size={14} style={{ marginRight: 4 }} />
-          {lesson.prof || 'Prof. Sconosciuto'}
+           <User size={14} style={{ marginRight: 4 }} />
+           <span>{lesson.prof ? lesson.prof : 'Unknown'}</span>
         </div>
         
-        {type === 'shared' && (
-          <div className="lesson-downloads" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: '#6b7280' }}>
-            <Download size={14} />
-            {lesson.download || 0}
-          </div>
-        )}
-
         <button onClick={handleView} className="lesson-view-btn">
           View
         </button>
