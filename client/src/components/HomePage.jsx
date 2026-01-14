@@ -389,7 +389,7 @@ function HomePage() {
         </svg>
       </button>
 
-      <div>
+      <div className="homepage-work-card-content">
         <h4>{work.displayTitle || formatPdfDisplayName(work.title)}</h4>
         <span>{work.status}</span>
       </div>

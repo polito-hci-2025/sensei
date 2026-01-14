@@ -17,7 +17,7 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.25rem;
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -126,6 +126,59 @@
 .sl-btn-secondary:hover {
   background-color: #f3f4f6;
   border-color: #9ca3af;
+}
+
+/* Barra di Ricerca nella Sidebar */
+.sl-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.sl-search-bar:focus-within {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.sl-search-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+}
+
+.sl-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #374151;
+  background: transparent;
+}
+
+.sl-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.sl-search-clear {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+  margin-left: 0.25rem;
+}
+
+.sl-search-clear:hover {
+  color: #374151;
 }
 
 /* --- MAIN CONTENT --- */

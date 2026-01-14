@@ -12,6 +12,7 @@ function SharedLibrary() {
   const [displayedWorks, setDisplayedWorks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Stato Filtri
   const [filters, setFilters] = useState({
@@ -64,16 +65,60 @@ function SharedLibrary() {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
-  // Applicazione Filtri
+  // Applicazione ricerca in tempo reale
+  useEffect(() => {
+    applySearch();
+  }, [searchQuery, sortOrder]);
+
+  // Funzione per applicare solo la ricerca
+  const applySearch = () => {
+    let result = [...allWorks];
+
+    // Filtro Search Query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(w => {
+        const title = (w.title || '').toLowerCase();
+        const description = (w.description || '').toLowerCase();
+        const prof = (w.prof || '').toLowerCase();
+        const tags = (w.tag || '').toLowerCase();
+        
+        return title.includes(query) || 
+               description.includes(query) || 
+               prof.includes(query) || 
+               tags.includes(query);
+      });
+    }
+
+    sortWorks(result, sortOrder);
+  };
+
+  // Applicazione Filtri (solo al click del bottone)
   const applyFilters = () => {
     let result = [...allWorks];
 
-    // 1. Filtro Subject
+    // 1. Filtro Search Query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(w => {
+        const title = (w.title || '').toLowerCase();
+        const description = (w.description || '').toLowerCase();
+        const prof = (w.prof || '').toLowerCase();
+        const tags = (w.tag || '').toLowerCase();
+        
+        return title.includes(query) || 
+               description.includes(query) || 
+               prof.includes(query) || 
+               tags.includes(query);
+      });
+    }
+
+    // 2. Filtro Subject
     if (filters.subject) {
       result = result.filter(w => w.subject === filters.subject);
     }
 
-    // 2. Filtro Grade
+    // 3. Filtro Grade
     if (filters.grade) {
       const cleanFilterGrade = filters.grade.replace('°', '').trim();
       result = result.filter(w => {
@@ -82,7 +127,7 @@ function SharedLibrary() {
       });
     }
 
-    // 3. Filtro DSA
+    // 4. Filtro DSA
     if (filters.dsa.length > 0) {
       result = result.filter(w => {
         const workTags = w.tag ? w.tag.toLowerCase() : ''; 
@@ -95,6 +140,7 @@ function SharedLibrary() {
 
   const clearFilters = () => {
     setFilters({ dsa: [], subject: '', grade: '' });
+    setSearchQuery('');
     sortWorks(allWorks, sortOrder);
   };
 
@@ -152,6 +198,27 @@ function SharedLibrary() {
           </button>
         </div>
         {/* -------------------------- */}
+
+        {/* BARRA DI RICERCA */}
+        <div className="sl-search-bar">
+          <Search size={18} className="sl-search-icon" />
+          <input 
+            type="text" 
+            placeholder="Search documents..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="sl-search-input"
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="sl-search-clear"
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
 
         <div className="sl-sidebar-header">
           <Filter size={20} className="text-purple-600" />
