@@ -242,22 +242,29 @@
   flex-wrap: wrap;
 }
 
-.homepage-lesson-card-category.category-dyslexia,
-.homepage-lesson-card.dyslexia .homepage-lesson-card-category {
-  background-color: #e8e5f0;
+.homepage-lesson-card-category.category-dyslexia {
+  background-color: #f3e8ff;
   color: #7c3aed;
 }
 
-.homepage-lesson-card-category.category-dysgraphia,
-.homepage-lesson-card.dysgraphia .homepage-lesson-card-category {
+.homepage-lesson-card-category.category-dysgraphia {
+  background-color: #e0f2fe;
+  color: #0891b2;
+}
+
+.homepage-lesson-card-category.category-dyscalculia {
+  background-color: #fce7f3;
+  color: #db2777;
+}
+
+.homepage-lesson-card-category.category-adhd {
   background-color: #dbeafe;
   color: #2563eb;
 }
 
-.homepage-lesson-card-category.category-dyscalculia,
-.homepage-lesson-card.dyscalculia .homepage-lesson-card-category {
-  background-color: #fce7f3;
-  color: #db2777;
+.homepage-lesson-card-category.category-default {
+  background-color: #f1f5f9;
+  color: #64748b;
 }
 
 .homepage-lesson-card-downloads {

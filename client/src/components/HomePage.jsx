@@ -252,8 +252,8 @@ function HomePage() {
   };
 
   const sharedLessonCards = sharedWorks.map((w) => {
-    const categories = splitDsaTags(w.tag);
-    const primaryCategory = categories[0] || w.tag || 'Dyslexia';
+    const categories = splitDsaTags(w.tag).map(c => c.toUpperCase());
+    const primaryCategory = categories[0] || (w.tag ? w.tag.toString().toUpperCase() : '') || 'DYSLEXIA';
 
     return {
       id: w.id,
@@ -280,13 +280,14 @@ function HomePage() {
     .sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
 
   const getCategoryClass = (category) => {
-    const key = (category ?? '').toString().trim().toLowerCase();
+    const key = (category ?? '').toString().trim().toUpperCase();
     const classes = {
-      dyslexia: 'dyslexia',
-      dysgraphia: 'dysgraphia',
-      dyscalculia: 'dyscalculia',
+      DYSLEXIA: 'dyslexia',
+      DYSGRAPHIA: 'dysgraphia',
+      DYSCALCULIA: 'dyscalculia',
+      ADHD: 'adhd',
     };
-    return classes[key] || 'dyslexia';
+    return classes[key] || 'default';
   };
 
   const normalizeSubject = (value) => (value ?? '').toString().trim().toLowerCase();
@@ -302,9 +303,7 @@ function HomePage() {
   };
 
   const LessonCard = ({ lesson }) => (
-    <div 
-      className={`homepage-lesson-card ${getCategoryClass(lesson.Type)}`}
-    >
+    <div className="homepage-lesson-card">
       <div className="homepage-lesson-card-header">
         <div className="homepage-lesson-card-categories">
           {(Array.isArray(lesson.categories) && lesson.categories.length > 0

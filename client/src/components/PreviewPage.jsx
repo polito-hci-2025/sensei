@@ -1913,7 +1913,9 @@ const PreviewPage = ({ type: typeProp } = {}) => {
                     <option value="History">History</option>
                     <option value="Math">Math</option>
                     <option value="Science">Science</option>
-                    <option value="Literature">Literature</option>
+                    <option value="English">English</option>
+                    <option value="Geography">Geography</option>
+                    <option value="Music">Music</option>
                     </select>
                 </div>
                 <div className="preview-info-group preview-half">
@@ -2003,7 +2005,9 @@ const PreviewPage = ({ type: typeProp } = {}) => {
                 <option value="History">History</option>
                 <option value="Math">Math</option>
                 <option value="Science">Science</option>
-                <option value="Literature">Literature</option>
+                <option value="English">English</option>
+                <option value="Geography">Geography</option>
+                <option value="Music">Music</option>
               </select>
             </div>
             <div className="preview-info-group preview-half">

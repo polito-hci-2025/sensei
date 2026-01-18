@@ -27,6 +27,7 @@ function LessonCard({ lesson, type }) {
   
   // Tag DSA (prende il primo se ce ne sono multipli)
   const dsaTag = lesson.tag ? lesson.tag.split(',')[0].trim() : 'General';
+  const displayDsaTag = dsaTag ? dsaTag.toUpperCase() : 'GENERAL';
 
   // --- LOGICA CLASSI CSS ---
   const getSubjectClass = (subject) => {
@@ -58,7 +59,7 @@ function LessonCard({ lesson, type }) {
       {/* HEADER: DSA Tag + Download */}
       <div className="lesson-card-header">
         <span className={`lesson-dsa-badge ${getDsaClass(dsaTag)}`}>
-          {dsaTag}
+          {displayDsaTag}
         </span>
         
         <div className="lesson-card-downloads">
@@ -76,7 +77,7 @@ function LessonCard({ lesson, type }) {
         
         {/* Descrizione (NUOVO) */}
         <p className="lesson-description">
-          {lesson.description || 'No description available'}
+          {lesson.description || ''}
         </p>
 
         {/* Badge Materia e Classe */}
