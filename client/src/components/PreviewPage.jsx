@@ -1971,7 +1971,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
               className="preview-button save"
               onClick={handleSave}
               disabled={!canSave}
-              title={!canSave ? 'Compila Titolo, Materia e Classe per salvare' : ''}
+              title={!canSave ? 'Fill in Title, Subject and Grade to save' : ''}
             >
               Save
             </button>
@@ -2063,7 +2063,7 @@ const PreviewPage = ({ type: typeProp } = {}) => {
               className="preview-button save"
               onClick={handleSave}
               disabled={!canSave}
-              title={!canSave ? 'Compila Titolo, Materia e Classe per salvare' : ''}
+              title={!canSave ? 'Fill in Title, Subject and Grade to save' : ''}
             >
               Save
             </button>
