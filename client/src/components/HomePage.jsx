@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'
 import API from '../API/API.mjs';
 import ConfirmDialog from './ConfirmDialog';
 import '../styles/HomePage.css';
