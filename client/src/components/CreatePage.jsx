@@ -259,7 +259,13 @@ function CreatePage() {
     setDraftQuestionType('true_false');
     setDraftAnswers(['', '']);
 
-    baselineRef.current = snapshotWork(work);
+    // Se il draft non è mai stato salvato nel database (id === null), 
+    // considera la baseline come vuota così viene sempre considerato come "modificato"
+    if (!work.id) {
+      baselineRef.current = snapshotWork({ dsaTypes: [], questions: [], paragraphs: [] });
+    } else {
+      baselineRef.current = snapshotWork(work);
+    }
   }, [location.state]);
 
   useEffect(() => {
@@ -647,6 +653,7 @@ function CreatePage() {
         onConfirm={() => {
           setIsBackConfirmOpen(false);
           clearDirty();
+          clearCreatedDraft();
           navigate(-1);
         }}
       />

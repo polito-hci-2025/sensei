@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import ConfirmDialog from './ConfirmDialog';
 import '../styles/DefaultLayout.css';
 import { useUnsavedChanges } from '../contexts/UnsavedChangesContext.jsx';
+import { clearCreatedDraft } from '../utils/createdDraftStorage.js';
 
 function DefaultLayout() {
   const navigate = useNavigate();
@@ -35,6 +36,10 @@ function DefaultLayout() {
         onConfirm={() => {
           setIsLeaveConfirmOpen(false);
           clearDirty();
+          // Pulisce il draft della CreatePage se si sta tornando indietro
+          if (location.pathname.startsWith('/create')) {
+            clearCreatedDraft();
+          }
           navigate('/');
         }}
       />

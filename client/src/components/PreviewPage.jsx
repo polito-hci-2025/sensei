@@ -1212,6 +1212,15 @@ const PreviewPage = ({ type: typeProp } = {}) => {
     };
   }, [isDirtyLocal, setIsDirty, clearDirty]);
 
+  // Imposta isDirtyLocal a true quando c'è un draft non salvato
+  useEffect(() => {
+    if (isDraftCreatedPreview && draftWork) {
+      // Se siamo in modalità draft preview (arrivando da CreatePage), 
+      // consideriamo sempre come "dirty" fino al salvataggio effettivo
+      setIsDirtyLocal(true);
+    }
+  }, [isDraftCreatedPreview, draftWork]);
+
   const fetchFileData = async () => {
     try {
 
